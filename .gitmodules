@@ -3,4 +3,4 @@
 	url = git@github.com:ekg/protobuf.git
 [submodule "server"]
 	path = server
-	url = git@github.com:macieksmuga/server.git
+	url = git@github.com:ga4gh/server.git
