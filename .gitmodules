@@ -1,0 +1,6 @@
+[submodule "protobuf"]
+	path = protobuf
+	url = git@github.com:ekg/protobuf.git
+[submodule "server"]
+	path = server
+	url = git@github.com:macieksmuga/server.git
