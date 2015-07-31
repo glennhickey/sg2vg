@@ -39,7 +39,7 @@ download.o: download.cpp download.h
 	${cpp} ${cppflags} -I. download.cpp -c
 
 ga2vg :  ga2vg.o sgclient.o download.o ${basicLibsDependencies}
-	${cpp} ${cppflags}  ga2vg.o sgclient.o  ${basicLibs} -o ga2vg 
+	${cpp} ${cppflags}  ga2vg.o sgclient.o download.o ${basicLibs} -o ga2vg 
 
 test : unitTests
 	pushd .  && cd ${sgExportPath} && make test && popd && tests/unitTests

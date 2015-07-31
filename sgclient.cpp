@@ -45,26 +45,30 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
                             int referenceSetID, int variantSetID)
 {
   Document doc;
-  doc.addMember("pageSize", numJoins);
-  doc.addMember("pageToken");
+  Value nv;
+  assert(nv.IsNull());
+  doc.AddMember("pageSize", numJoins, doc.GetAllocator());
+  doc.AddMember("pageToken", nv, doc.GetAllocator());
   if (idx >=0)
   {
-    doc["pageToken"].setValue(idx);
+    doc["pageToken"].SetInt64(idx);
   }
-  doc.addMember("referenceSetId");
+  doc.AddMember("referenceSetId", nv, doc.GetAllocator());
   if (referenceSetID >= 0)
   {
-    doc["referenceSetId"].setValue(referenceSetID);
+    doc["referenceSetId"].SetInt64(referenceSetID);
   }
-  doc.addMember("variantSetId");
+  doc.AddMember("variantSetId", nv, doc.GetAllocator());
   if (variantSetID >= 0)
   {
-    doc.addMember(variantSetID);
+    doc["variantSetId"].SetInt64(variantSetID);
   }
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
   doc.Accept(writer);
   string postOptions = buffer.GetString();
+
+  return -1;
 
 }
 

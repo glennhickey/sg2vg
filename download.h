@@ -33,12 +33,12 @@ public:
                            const std::vector<std::string>& headers,
                            const std::string& postData);
 
-protected:
-
    struct MemoryStruct {
       char *memory;
       size_t size;
    };
+
+protected:
 
    MemoryStruct _buffer;
 };
