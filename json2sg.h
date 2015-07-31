@@ -24,12 +24,22 @@ public:
    JSON2SG();
    ~JSON2SG();
 
+   /** Parse sequences array.  Note, caller is responsible for freeing seqs */
+   int parseSequences(const char* buffer, std::vector<SGSequence*>& outSeqs);
+
+   /** Parse single sequence. */
+   SGSequence parseSequence(const rapidjson::Value& val);
+
+   /** Parse joins array.  Note, caller is responsible for freeing joins*/
    int parseJoins(const char* buffer, std::vector<SGJoin*>& outJoins);
 
+   /** Parse single join.  Note, caller responsible for freeing join */
    SGJoin* parseJoin(const rapidjson::Value& val);
 
+   /** Prase side */
    SGSide parseSide(const rapidjson::Value& val);
 
+   /** Parse Position */
    SGPosition parsePosition(const rapidjson::Value& val);
 
 protected:

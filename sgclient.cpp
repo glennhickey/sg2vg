@@ -56,23 +56,84 @@ void SGClient::setURL(const string& baseURL)
   }
 }
 
+int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
+                                int idx, int numSequences,
+                                int referenceSetID, int variantSetID)
+{
+  outSequences.clear();
+    
+  string postOptions = getPostOptions(idx, numSequences, referenceSetID,
+                                      variantSetID);
+
+  string path = "/sequences/search";
+
+  // Send the Request
+  const char* result = _download.postRequest(_url + path,
+                                             vector<string>(1, CTHeader),
+                                             postOptions);
+
+  // Parse the JSON output into a Sequences array and add it to the side graph
+  JSON2SG parser;
+  vector<SGSequence*> sequences;
+  parser.parseSequences(result, sequences);
+  for (int i = 0; i < sequences.size(); ++i)
+  {
+    // store map to original id as Side Graph interface requires
+    // ids be [0,n) which may be unessarily strict.  Too lazy right
+    // now to track down SGExport code that depends on this..
+    sg_int_t originalID = sequences[i]->getID();
+    const SGSequence* addedSeq = _sg->addSequence(sequences[i]);
+    addSeqIDMapping(originalID, addedSeq->getID());
+    outSequences.push_back(addedSeq);
+  }
+
+  return outSequences.size();
+}
+
 int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
                             int idx, int numJoins,
                             int referenceSetID, int variantSetID)
 {
   outJoins.clear();
   
-  // Build JSON POST Options
+  string postOptions = getPostOptions(idx, numJoins, referenceSetID,
+                                      variantSetID);
+  string path = "/joins/search";
+
+  // Send the Request
+  const char* result = _download.postRequest(_url + path,
+                                             vector<string>(1, CTHeader),
+                                             postOptions);
+
+  // Parse the JSON output into a Joins array and add it to the side graph
+  JSON2SG parser;
+  vector<SGJoin*> joins;
+  parser.parseJoins(result, joins);
+  for (int i = 0; i < joins.size(); ++i)
+  {
+    mapSeqIDsInJoin(*joins[i]);
+    outJoins.push_back(_sg->addJoin(joins[i]));
+  }
+
+  return outJoins.size();
+}
+
+string SGClient::getPostOptions(int pageToken,
+                              int pageSize,
+                              int referenceSetID,
+                              int variantSetID) const
+{
+   // Build JSON POST Options
   Document doc;
   doc.Parse("{}");
   Value nv;
   assert(nv.IsNull());
   doc.AddMember("pageSize", nv, doc.GetAllocator());
-  doc["pageSize"].SetInt64(numJoins);
+  doc["pageSize"].SetInt64(pageSize);
   doc.AddMember("pageToken", nv, doc.GetAllocator());
-  if (idx > 0)
+  if (pageToken > 0)
   {
-    doc["pageToken"].SetInt64(idx);
+    doc["pageToken"].SetInt64(pageToken);
   }
   doc.AddMember("referenceSetId", nv, doc.GetAllocator());
   if (referenceSetID >= 0)
@@ -87,26 +148,5 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
   doc.Accept(writer);
-  string postOptions = buffer.GetString();
-
-  string path = "/joins/search";
-
-  cout << "postOptions " << postOptions << endl;
-
-  // Send the Request
-  const char* result = _download.postRequest(_url + path,
-                                             vector<string>(1, CTHeader),
-                                             postOptions);
-
-  // Parse the JSON output into a Joins array and add it to the side graph
-  JSON2SG parser;
-  vector<SGJoin*> joins;
-  parser.parseJoins(result, joins);
-  for (int i = 0; i < joins.size(); ++i)
-  {
-    outJoins.push_back(_sg->addJoin(joins[i]));
-  }
-
-  return outJoins.size();
+  return buffer.GetString();
 }
-

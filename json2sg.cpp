@@ -26,6 +26,47 @@ JSON2SG::~JSON2SG()
   
 }
 
+int JSON2SG::parseSequences(const char* buffer,
+                            std::vector<SGSequence*>& outSeqs)
+{
+  Document json;
+  json.Parse(buffer);
+  const Value& jsonSeqArray = json["sequences"];
+  if (!jsonSeqArray.IsArray())
+  {
+    throw runtime_error("Error parsing JSON Sequences Array");
+  }
+  outSeqs.resize(jsonSeqArray.Size());
+
+  // rapidjson uses SizeType instead of size_t.
+  for (SizeType i = 0; i < jsonSeqArray.Size(); i++)
+  {
+    SGSequence seq = parseSequence(jsonSeqArray[i]);
+    outSeqs[i] = new SGSequence(seq.getID(), seq.getLength(), seq.getName());
+  }
+
+  return outSeqs.size();
+}
+
+SGSequence JSON2SG::parseSequence(const Value& val)
+{
+  const Value& jsonLength = val["length"];
+  // not sure why stored in string and not int
+  assert(jsonLength.IsString());
+  stringstream ss;
+  ss << jsonLength.GetString();
+  sg_int_t sgLength;
+  ss >> sgLength;
+  const Value& jsonID = val["id"];
+  // not sure why stored in string and not int
+  assert(jsonID.IsString());
+  stringstream ss2;
+  ss2 << jsonID.GetString();
+  sg_int_t sgID;
+  ss2>> sgID;
+  return SGSequence(sgID, sgLength, "todo");
+}
+
 int JSON2SG::parseJoins(const char* buffer, vector<SGJoin*>& outJoins)
 {
   // Read in the JSON string into Side Graph objects
