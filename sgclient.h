@@ -13,8 +13,8 @@
 
 #include <sstream>
 #include "SideGraph.h"
+#include "Download.h"
 
-struct CURL;
 
 /** 
 All logic for reading side graph data from the GA4GH client, 
@@ -44,7 +44,7 @@ public:
    /** Download joins into the Side Graph. returns number of joins */
    int downloadJoins(std::vector<const SGJoin*>& outJoins,
                      int idx = 0,
-                     int numJoins = std::numeric_limits<int>::max()
+                     int numJoins = std::numeric_limits<int>::max(),
                      int referenceSetID = -1,
                      int variantSetID = -1);
 
@@ -65,28 +65,13 @@ public:
    
 protected:
 
-   initCurl();
-   
-   
-   
    static const std::string CTHeader;
    
    SideGraph* _sg;
    std::string _url;
+   Download _download;
 
-   CURL* _curl;
-   
 };
 
-inline std::string SGClient::nullInt(int v, int nv)
-{
-  if (v <= nv)
-  {
-    return "null";
-  }
-  stringstream ss;
-  ss << v;
-  return v.str();
-}
 
 #endif

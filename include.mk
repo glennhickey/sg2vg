@@ -59,7 +59,7 @@ protobufPath=${rootPath}/protobuf
 rapidJsonPath=${rootPath}/rapidjson
 
 cflags +=  -I ${sgExportPath} ${platformCompileFlags}
-cppflags +=  -I ${sgExportPath} -I ${rapidJsonPath} -I ${protobufPath}/build/include ${platformCompileFlags}
+cppflags +=  -I ${sgExportPath} -I ${rapidJsonPath}/include -I ${protobufPath}/build/include ${platformCompileFlags}
 basicLibs = ${sgExportPath}/sgExport.a ${protobufPath}/libprotobuf.a -lz ${platformLinkFlags}
 basicLibsDependencies = ${sgExportPath}/sgExport.a ${protobufPath}/libprotobuf.a
 

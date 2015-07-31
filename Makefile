@@ -12,7 +12,7 @@ clean :
 unitTests : ga2vg
 	cd tests && make
 
-ga2vg.o : ga2vg.cpp sgclient.h ${basicLibsDependencies}
+ga2vg.o : ga2vg.cpp sgclient.h download.h ${basicLibsDependencies}
 	${cpp} ${cppflags} -I . ga2vg.cpp -c
 
 ${sgExportPath}/sgExport.a : ${sgExportPath}/*.cpp ${sgExportPath}/*.h
@@ -32,10 +32,13 @@ vg.pb.h: vg.proto ${protobufPath}/libprotobuf.a
 vg.pb.o: vg.pb.h vg.pb.cc
 	${cpp} ${cppflags} -I . vg.pb.cc -c 
 
-sgclient.o: sgclient.cpp sgclient.h ${sgExportPath}/*.h
+sgclient.o: sgclient.cpp sgclient.h download.h ${sgExportPath}/*.h
 	${cpp} ${cppflags} -I. sgclient.cpp -c
 
-ga2vg :  ga2vg.o sgclient.o ${basicLibsDependencies}
+download.o: download.cpp download.h 
+	${cpp} ${cppflags} -I. download.cpp -c
+
+ga2vg :  ga2vg.o sgclient.o download.o ${basicLibsDependencies}
 	${cpp} ${cppflags}  ga2vg.o sgclient.o  ${basicLibs} -o ga2vg 
 
 test : unitTests

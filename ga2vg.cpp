@@ -12,6 +12,7 @@
 #include <getopt.h>
 
 #include "sgclient.h"
+#include "download.h"
 
 using namespace std;
 
@@ -59,9 +60,12 @@ int main(int argc, char** argv)
       abort();
     }
   }
+
+  Download::init();
   
   string url = argv[1];
 
   cout << "url " << url << endl;
-  
+
+  Download::cleanup();
 }

@@ -7,14 +7,16 @@
 #include <iostream>
 #include <sstream>
 
-#include "Browser.hpp"
 #include "rapidjson/document.h"    
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
 #include "sgclient.h"
 
-const string SGClient::CTHeader = "Content-Type: application/json"
+using namespace std;
+using namespace rapidjson;
+
+const string SGClient::CTHeader = "Content-Type: application/json";
 
 SGClient::SGClient() : _sg(0)
 {
@@ -34,7 +36,7 @@ void SGClient::erase()
 
 void SGClient::setURL(const string& baseURL, const string& version)
 {
-  _url = baseURL + "/" + version + "/"
+  _url = baseURL + "/" + version + "/";
 }
 
 
@@ -57,24 +59,12 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   doc.addMember("variantSetId");
   if (variantSetID >= 0)
   {
-    doc.addMember(variatnSetID);
+    doc.addMember(variantSetID);
   }
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
-  options.Accept(writer);
-  postOptions = buffer.GetString();
+  doc.Accept(writer);
+  string postOptions = buffer.GetString();
 
-  Browser browser;
-  vector<string> headers(1, CTHeader);
-  
-  string request = ContentType + " -X POST -d\'" + postOptions + "\'";
-
-  
-  
 }
-
-
-
-
-using namespace std;
 
