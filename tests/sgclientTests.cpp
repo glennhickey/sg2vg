@@ -25,7 +25,7 @@ void dummyTest(CuTest *testCase)
   CuAssertTrue(testCase, true);
 }
 
-CuSuite* pathMapperTestSuite(void) 
+CuSuite* sgClientTestSuite(void) 
 {
   CuSuite* suite = CuSuiteNew();
   SUITE_ADD_TEST(suite, dummyTest);

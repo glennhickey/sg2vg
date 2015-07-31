@@ -4,7 +4,12 @@
  * Released under the MIT license, see LICENSE.cactus
  */
 
+#include <curl/curl.h>
+#include <jansson.h>
+
 #include "sgclient.h"
+
+
 
 using namespace std;
 
