@@ -36,12 +36,13 @@ public:
    void erase();
 
    /** set URL to be used by all the other methods */
-   void setURL(const std::string& baseURL, const std::string& version);
+   void setURL(const std::string& baseURL);
 
    /** Download a whole Side Graph */
    const SideGraph* downloadGraph();
 
-   /** Download joins into the Side Graph. returns number of joins */
+   /** Download joins into the Side Graph. returns number of joins. Note
+    * must download Sequences first or the SideGraph API will fail */
    int downloadJoins(std::vector<const SGJoin*>& outJoins,
                      int idx = 0,
                      int numJoins = std::numeric_limits<int>::max(),

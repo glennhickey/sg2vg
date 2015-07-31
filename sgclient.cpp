@@ -12,6 +12,8 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "sgclient.h"
+#include "json2sg.h"
+
 
 using namespace std;
 using namespace rapidjson;
@@ -34,22 +36,41 @@ void SGClient::erase()
   _url = "";
 }
 
-void SGClient::setURL(const string& baseURL, const string& version)
+void SGClient::setURL(const string& baseURL)
 {
-  _url = baseURL + "/" + version + "/";
-}
+  _url = baseURL;
+  assert(_url.length() > 1);
+  if (_url.back() == '/')
+  {
+    _url.pop_back();
+  }
 
+  size_t lastSlash = _url.find_last_of("/");
+  size_t lastV = _url.find_last_of("vV");
+
+  if (lastV == string::npos ||
+      (lastSlash != string::npos && lastV <= lastSlash) ||
+      lastV + 6 < _url.length())
+  {
+    throw runtime_error("Version not detected at end of URL");
+  }
+}
 
 int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
                             int idx, int numJoins,
                             int referenceSetID, int variantSetID)
 {
+  outJoins.clear();
+  
+  // Build JSON POST Options
   Document doc;
+  doc.Parse("{}");
   Value nv;
   assert(nv.IsNull());
-  doc.AddMember("pageSize", numJoins, doc.GetAllocator());
+  doc.AddMember("pageSize", nv, doc.GetAllocator());
+  doc["pageSize"].SetInt64(numJoins);
   doc.AddMember("pageToken", nv, doc.GetAllocator());
-  if (idx >=0)
+  if (idx > 0)
   {
     doc["pageToken"].SetInt64(idx);
   }
@@ -68,7 +89,24 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   doc.Accept(writer);
   string postOptions = buffer.GetString();
 
-  return -1;
+  string path = "/joins/search";
 
+  cout << "postOptions " << postOptions << endl;
+
+  // Send the Request
+  const char* result = _download.postRequest(_url + path,
+                                             vector<string>(1, CTHeader),
+                                             postOptions);
+
+  // Parse the JSON output into a Joins array and add it to the side graph
+  JSON2SG parser;
+  vector<SGJoin*> joins;
+  parser.parseJoins(result, joins);
+  for (int i = 0; i < joins.size(); ++i)
+  {
+    outJoins.push_back(_sg->addJoin(joins[i]));
+  }
+
+  return outJoins.size();
 }
 

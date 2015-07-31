@@ -67,5 +67,11 @@ int main(int argc, char** argv)
 
   cout << "url " << url << endl;
 
+  SGClient sgClient;
+  sgClient.setURL(url);
+
+  vector<const SGJoin*> joins;
+  sgClient.downloadJoins(joins);
+  
   Download::cleanup();
 }

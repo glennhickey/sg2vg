@@ -17,7 +17,7 @@
 
 /** 
 Keep all HTTP access code wrapped in this one class, as it's something
-that's getting played aroudn with a lot. 
+that I'm messing around with too much. 
 */
 class Download
 {
@@ -37,6 +37,9 @@ public:
       char *memory;
       size_t size;
    };
+
+   const char* getBuffer();
+   void clearBuffer();
 
 protected:
 
