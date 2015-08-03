@@ -70,8 +70,18 @@ int main(int argc, char** argv)
   SGClient sgClient;
   sgClient.setURL(url);
 
+  vector<const SGSequence*> sequences;
   vector<const SGJoin*> joins;
+  sgClient.downloadSequences(sequences);
+  string s;
+  sgClient.downloadBases(0, s);
   sgClient.downloadJoins(joins);
+  // todo
+  //sgClient.downloadPaths(paths);
+  
+  cout << *sgClient.getSideGraph() << endl;
+
+  
   
   Download::cleanup();
 }

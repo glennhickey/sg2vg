@@ -34,10 +34,13 @@ void SGClient::erase()
 {
   delete _sg;
   _url = "";
+  _sg = 0;
 }
 
 void SGClient::setURL(const string& baseURL)
 {
+  erase();
+  
   _url = baseURL;
   assert(_url.length() > 1);
   if (_url.back() == '/')
@@ -54,6 +57,8 @@ void SGClient::setURL(const string& baseURL)
   {
     throw runtime_error("Version not detected at end of URL");
   }
+
+  _sg = new SideGraph();
 }
 
 int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
@@ -88,6 +93,58 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   }
 
   return outSequences.size();
+}
+
+int SGClient::downloadBases(sg_int_t sgSeqID, string& outBases, int start,
+                            int end)
+{
+  outBases.clear();
+
+  const SGSequence* seq = _sg->getSequence(sgSeqID);
+  if (seq == NULL)
+  {
+    stringstream ss;
+    ss << "Unable to downloadBases for sgSeqID " << sgSeqID << " because"
+       << " sequence was never downloaded using downloadSequecnes";
+    throw runtime_error(ss.str());
+  }
+  int origID = getOriginalSeqID(sgSeqID);
+
+  int queryLen = seq->getLength();
+  stringstream opts;
+  opts << "/sequences/" << origID << "/bases";
+  if (start != 0 && end != -1)
+  {
+    if (start < 0 || end < 0 || end <= start || end > seq->getLength())
+    {
+      stringstream ss;
+      ss << "start=" << start << ", end=" << end << " invalid for sequence"
+         << " id=" << origID << " with length " << seq->getLength();
+      throw runtime_error(ss.str());
+    }
+    opts << "?start=" << start << "\\&end=" << end;
+    queryLen = end - start;
+  }
+
+  string path = opts.str();
+  
+  // Send the Request
+  const char* result = _download.getRequest(_url + path,
+                                            vector<string>());
+
+  // Parse the JSON output into a string
+  JSON2SG parser;
+  parser.parseBases(result, outBases);
+
+  if (outBases.length() != queryLen)
+  {
+    stringstream ss;
+    ss << "Tried to download " << queryLen << " bases for sequence "
+       << origID << " but got " << outBases.length() << " bases.";
+    throw runtime_error(ss.str());
+  }
+
+  return outBases.length();
 }
 
 int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,

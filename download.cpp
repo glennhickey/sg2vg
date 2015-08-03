@@ -65,6 +65,8 @@ const char* Download::postRequest(const string& url,
                                   const vector<string>& headers,
                                   const string& postData)
 {
+  clearBuffer();
+  
   CURL *curl_handle;
   CURLcode res;
   curl_handle = curl_easy_init();
@@ -110,6 +112,56 @@ const char* Download::postRequest(const string& url,
 
   return getBuffer();
 }
+
+const char* Download::getRequest(const string& url,
+                                 const vector<string>& headers)
+{
+  clearBuffer();
+  
+  CURL *curl_handle;
+  CURLcode res;
+  curl_handle = curl_easy_init();
+  
+  /* specify URL to get */
+  curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str());
+
+  /* Now specify we want to GET data */ 
+  curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1L);
+
+  /* headers */
+  struct curl_slist* curlHeaders = NULL;
+  curl_slist_append(curlHeaders, "Transfer-Encoding: chunked");
+  for (int i = 0; i < headers.size(); ++i)
+  {
+    curlHeaders = curl_slist_append(curlHeaders, headers[i].c_str());
+  }
+  curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, curlHeaders);
+  
+  /* send all data to this function  */ 
+  curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+ 
+  /* we pass our 'chunk' struct to the callback function */ 
+  curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&_buffer);
+
+  #ifndef _NDEBUG
+  curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+  #endif
+
+  res = curl_easy_perform(curl_handle);
+
+  /* Check for errors */ 
+  if(res != CURLE_OK)
+  {
+    throw runtime_error(string("curl_easy_perform() failed: ") +
+                        curl_easy_strerror(res));
+  }
+  
+  curl_slist_free_all(curlHeaders);
+  curl_easy_cleanup(curl_handle);
+
+  return getBuffer();
+}
+
 
 const char* Download::getBuffer()
 {

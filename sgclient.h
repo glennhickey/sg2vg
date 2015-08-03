@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 #include <limits>
-#include <map>
+#include <unordered_map>
 
 #include <sstream>
 #include "SideGraph.h"
@@ -42,13 +42,31 @@ public:
    /** Download a whole Side Graph */
    const SideGraph* downloadGraph();
 
-   /** Download sequences into the Side Graph. returns number of joins */
+   /** Download sequences into the Side Graph. returns number of sequences */
    int downloadSequences(std::vector<const SGSequence*>& outSequences,
                          int idx = 0,
                          int numSequences = std::numeric_limits<int>::max(),
                          int referenceSetID = -1,
                          int variantSetID = -1);
+
+   /** Download the DNA bases for a given sequence.  Note the ID here is
+    * the mapped ID (ie used by SideGraph class) */
+   int downloadBases(sg_int_t sgSeqID, std::string& outBases, int start = 0,
+                     int end = -1);
+
+   /** Download joins into the Side Graph. returns number of joins. Note
+    * must download Sequences first!!  Sequence ID's in joins are
+    * automatically mapped to in-memory Side Graph ids.  */
+   int downloadJoins(std::vector<const SGJoin*>& outJoins,
+                     int idx = 0,
+                     int numJoins = std::numeric_limits<int>::max(),
+                     int referenceSetID = -1,
+                     int variantSetID = -1);
+
    
+   /** Download paths */
+   // todo
+
    /** SideGraph class, as currently implemented, only works with 
     * sequences with ids in [0, n), and it happily changes input id's 
     * to enforce this.  We therefore keep a little map to get back the
@@ -61,20 +79,6 @@ public:
    /** Add a mapping */
    void addSeqIDMapping(sg_int_t originalID, sg_int_t sgID);
    
-   /** Download joins into the Side Graph. returns number of joins. Note
-    * must download Sequences first!! */
-   int downloadJoins(std::vector<const SGJoin*>& outJoins,
-                     int idx = 0,
-                     int numJoins = std::numeric_limits<int>::max(),
-                     int referenceSetID = -1,
-                     int variantSetID = -1);
-
-   /** Download DNA for a sequence. Unlike other functions, the DNA
-    * downloaded does not get stored in this object */
-   int downloadDNA(sg_int_t sequenceID, std::string& outDNA);
-
-   /** Download paths */
-   // todo
 
    /** Get access to Side Graph that's been downloaded so far */
    const SideGraph* getSideGraph() const;
@@ -93,20 +97,22 @@ protected:
    std::string _url;
    Download _download;
    // sucky hack: to do: fix sidegraph and lookup to let sequences
-   // have arbitrary ids. or at least change to unorder_map? 
-   std::map<sg_int_t, sg_int_t> _toOrigSeqId;
-   std::map<sg_int_t, sg_int_t> _fromOrigSeqId;
+   // have arbitrary ids.
+   std::unordered_map<sg_int_t, sg_int_t> _toOrigSeqId;
+   std::unordered_map<sg_int_t, sg_int_t> _fromOrigSeqId;
 
 };
 
 inline sg_int_t SGClient::getOriginalSeqID(sg_int_t sgID) const
 {
+  assert(_toOrigSeqId.find(sgID) != _toOrigSeqId.end());
   return _toOrigSeqId.find(sgID)->second;
 }
 
-inline sg_int_t SGClient::getSGSeqID(sg_int_t sgID) const
+inline sg_int_t SGClient::getSGSeqID(sg_int_t origID) const
 {
-  return _fromOrigSeqId.find(sgID)->second;
+  assert(_fromOrigSeqId.find(origID) != _fromOrigSeqId.end());
+  return _fromOrigSeqId.find(origID)->second;
 }
 
 inline void SGClient::mapSeqIDsInJoin(SGJoin& join) const
@@ -126,6 +132,11 @@ inline void SGClient::addSeqIDMapping(sg_int_t originalID, sg_int_t sgID)
 {
   _toOrigSeqId.insert(std::pair<sg_int_t, sg_int_t>(sgID, originalID));
   _fromOrigSeqId.insert(std::pair<sg_int_t, sg_int_t>(originalID, sgID));
+}
+
+inline const SideGraph* SGClient::getSideGraph() const
+{
+  return _sg;
 }
 
 #endif

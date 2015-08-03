@@ -33,6 +33,8 @@ public:
                            const std::vector<std::string>& headers,
                            const std::string& postData);
 
+   const char* getRequest(const std::string& url,
+                          const std::vector<std::string>& headers);                  
    struct MemoryStruct {
       char *memory;
       size_t size;

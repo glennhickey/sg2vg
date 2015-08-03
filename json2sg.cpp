@@ -67,6 +67,20 @@ SGSequence JSON2SG::parseSequence(const Value& val)
   return SGSequence(sgID, sgLength, "todo");
 }
 
+int JSON2SG::parseBases(const char* buffer, string& outBases)
+{
+  Document json;
+  json.Parse(buffer);
+  const Value& jsonSeq = json["sequence"];
+  if (!jsonSeq.IsString())
+  {
+    throw runtime_error("error parsing JSON sequence bases");
+  }
+  outBases.clear();
+  outBases = jsonSeq.GetString();
+  return outBases.size();
+}
+
 int JSON2SG::parseJoins(const char* buffer, vector<SGJoin*>& outJoins)
 {
   // Read in the JSON string into Side Graph objects
@@ -119,5 +133,5 @@ SGPosition JSON2SG::parsePosition(const Value& val)
   ss2 << jsonSeqID.GetString();
   sg_int_t seqid;
   ss2 >> seqid;
-  return SGPosition(pos, seqid);
+  return SGPosition(seqid, pos);
 }

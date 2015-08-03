@@ -30,6 +30,9 @@ public:
    /** Parse single sequence. */
    SGSequence parseSequence(const rapidjson::Value& val);
 
+   /** Parse squence bases. */
+   int parseBases(const char* buffer, std::string& outBases);
+
    /** Parse joins array.  Note, caller is responsible for freeing joins*/
    int parseJoins(const char* buffer, std::vector<SGJoin*>& outJoins);
 
