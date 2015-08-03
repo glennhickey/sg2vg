@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 #include "side2seq.h"
 
@@ -96,6 +97,7 @@ void Side2Seq::convertSequence(const SGSequence* seq)
     getIncidentJoins(start, end, cutSides);
   }
   SGPosition first(seq->getID(), 0);
+  int firstIdx = _outGraph->getNumSequences();
   for (set<SGSide>::iterator i = cutSides.begin(); i != cutSides.end(); ++i)
   {
     SGPosition last = i->getBase();
@@ -114,6 +116,17 @@ void Side2Seq::convertSequence(const SGSequence* seq)
   // need to do one segment at end
   SGPosition last(seq->getID(), seq->getLength() - 1);
   addOutSequence(seq, first, last);
+
+  // chain all the added seqeunces with new joins
+  for (int j = firstIdx + 1; j < _outGraph->getNumSequences(); ++j)
+  {
+    const SGSequence* fs = _outGraph->getSequence(j-1);
+    const SGSequence* ts = _outGraph->getSequence(j);
+    SGSide side1(SGPosition(fs->getID(), fs->getLength() - 1), false);
+    SGSide side2(SGPosition(ts->getID(), 0), true);
+    _outGraph->addJoin(new SGJoin(side1, side2));
+    //cerr << "\nNJ " << SGJoin(side1, side2) << endl;
+  }
 }
 
 void Side2Seq::addOutSequence(const SGSequence* inSeq,
@@ -129,7 +142,7 @@ void Side2Seq::addOutSequence(const SGSequence* inSeq,
   // add the bases
   assert(_outBases.size() == outSeq->getID());
   _outBases.resize(outSeq->getID() + 1);
-  getInDNA(inSeq->getID(), first.getPos(), length, _outBases.back());
+  getInDNA(SGSegment(SGSide(first, true), length), _outBases.back());
 }
 
 void Side2Seq::convertJoin(const SGJoin* join)
@@ -154,7 +167,7 @@ void Side2Seq::convertPath(int inPathIdx)
 
   const NamedPath& inPath = _inPaths->at(inPathIdx);
   NamedPath& outPath = _outPaths[inPathIdx];
-  outPath.first = inPath.first;
+  outPath.first = inPath.first;  
   for (int i = 0; i < inPath.second.size(); ++i)
   {
     const SGSegment& seg = inPath.second[i];
@@ -166,7 +179,44 @@ void Side2Seq::convertPath(int inPathIdx)
     }
     vector<SGSegment> frag;
     _luTo.getPath(firstPos, lastPos, frag);
-    outPath.second.insert(outPath.second.end(), frag.begin(), frag.end());
+    
+    // to verify bases match
+    string seq1;
+    getInDNA(seg, seq1);
+
+    string seq2;
+    string buf;
+    for (int j = 0; j < frag.size(); ++j)
+    {
+      assert(frag[j].getSide().getBase().getSeqID() <
+             _outGraph->getNumSequences());
+      
+      getOutDNA(frag[j], buf);
+      seq2 += buf;
+      if (j > 0)
+      {
+        SGJoin bridge(frag[j-1].getOutSide(),
+                      frag[j].getInSide());
+        if (_outGraph->getJoin(&bridge) != NULL)
+        {
+          stringstream ss;
+          ss << "Error converting " << inPathIdx << "th path with name="
+             << inPath.first << ": missing join " << bridge;
+//          throw runtime_error(ss.str());
+          cerr << endl << ss.str() << endl;
+        }
+      }
+      outPath.second.push_back(frag[j]);
+    }
+    transform(seq1.begin(), seq1.end(), seq1.begin(), ::toupper);
+    transform(seq2.begin(), seq2.end(), seq2.begin(), ::toupper);
+    if (seq1 != seq1)
+    {
+      stringstream ss;
+      ss << "Error converting " << inPathIdx << "th path with name="
+         << inPath.first << ": output path does not match";
+      throw runtime_error(ss.str());
+    }
   }
 }
 
@@ -201,4 +251,58 @@ string Side2Seq::getOutSeqName(const SGSequence* inSeq,
   stringstream ss;
   ss << inSeq->getName() << "_" << first;
   return ss.str();
+}
+
+char Side2Seq::reverseComplement(char c)
+{
+  switch (c)
+  {
+  case 'A' : return 'T'; 
+  case 'a' : return 't'; 
+  case 'C' : return 'G'; 
+  case 'c' : return 'g';
+  case 'G' : return 'C';
+  case 'g' : return 'c';
+  case 'T' : return 'A';
+  case 't' : return 'a';
+  default : break;
+  }
+  return c;
+}
+
+void Side2Seq::reverseComplement(std::string& s)
+{
+  if (!s.empty())
+  {
+    size_t j = s.length() - 1;
+    size_t i = 0;
+    char buf;
+    do
+    {
+      while (j > 0 && s[j] == '-')
+      {
+        --j;
+      }
+      while (i < s.length() - 1 && s[i] == '-')
+      {
+        ++i;
+      }
+      
+      if (i >= j || s[i] == '-' || s[j] == '-')
+      {
+        if (i == j && s[i] != '-')
+        {
+          s[i] = reverseComplement(s[i]);
+        }
+        break;
+      }
+
+      buf = reverseComplement(s[i]);
+      s[i] = reverseComplement(s[j]);
+      s[j] = buf;
+
+      ++i;
+      --j;
+    } while (true);
+  }
 }

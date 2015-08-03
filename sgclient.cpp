@@ -234,7 +234,7 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
   int ret = parser.parseAllele(result, outID, outPath, outVariantSetID,
                                outName);
 
-  if (outID != alleleID)
+  if (ret >=0 && outID != alleleID)
   {
     throw runtime_error("AlleleID mismatch");
   }

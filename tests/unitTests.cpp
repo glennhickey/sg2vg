@@ -10,6 +10,7 @@ int runAllTests(void) {
   CuString *output = CuStringNew();
   CuSuite* suite = CuSuiteNew(); 
   CuSuiteAddSuite(suite, sgClientTestSuite());
+  CuSuiteAddSuite(suite, side2SeqTestSuite());
   CuSuiteRun(suite);
   CuSuiteSummary(suite, output);
   CuSuiteDetails(suite, output);

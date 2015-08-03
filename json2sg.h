@@ -81,7 +81,7 @@ T JSON2SG::extractStringVal(const rapidjson::Value& val, const char* field)
     throw std::runtime_error(std::string("Error parsing JSON field ") + field);
   }
   const rapidjson::Value& v = val[field];
-  if (v.IsString())
+  if (!v.IsString())
   {
     throw std::runtime_error(std::string("Error parsing JSON field ") + field);
   }

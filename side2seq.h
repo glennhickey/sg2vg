@@ -58,9 +58,15 @@ public:
     * that was converted from the ith path in the input bases */
    const std::vector<NamedPath>& getOutPaths() const;
 
-   /** get dna from an input sequence by id */
-   void getInDNA(sg_int_t seqID, sg_int_t pos, sg_int_t length,
-                 std::string& outDNA) const;
+   /** get dna from an input sequence */
+   void getInDNA(const SGSegment& seg, std::string& outDNA) const;
+
+   /** get dna from an output sequence */
+   void getOutDNA(const SGSegment& seg, std::string& outDNA) const;   
+
+   /** copied from halCommon.h -- dont want hal dep just for this*/
+   static char reverseComplement(char c);
+   static void reverseComplement(std::string& s);
 
 protected:
 
@@ -118,10 +124,26 @@ inline const std::vector<Side2Seq::NamedPath>& Side2Seq::getOutPaths() const
   return _outPaths;
 }
 
-inline void Side2Seq::getInDNA(sg_int_t seqID, sg_int_t pos, sg_int_t length,
+inline void Side2Seq::getInDNA(const SGSegment& seg,
                                std::string& outDNA) const
 {
-  outDNA = _inBases->at(seqID).substr(pos, length);
+  outDNA = _inBases->at(seg.getSide().getBase().getSeqID()).substr(
+    seg.getMinPos().getPos(), seg.getLength());
+  if (!seg.getSide().getForward())
+  {
+    reverseComplement(outDNA);
+  }
+}
+
+inline void Side2Seq::getOutDNA(const SGSegment& seg,
+                               std::string& outDNA) const
+{
+  outDNA = _outBases.at(seg.getSide().getBase().getSeqID()).substr(
+    seg.getMinPos().getPos(), seg.getLength());
+  if (!seg.getSide().getForward())
+  {
+    reverseComplement(outDNA);
+  }
 }
 
 inline bool Side2Seq::SGJoinPtrSide2Less::operator()(const SGJoin* j1,
