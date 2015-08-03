@@ -61,6 +61,41 @@ void SGClient::setURL(const string& baseURL)
   _sg = new SideGraph();
 }
 
+const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
+                                         vector<NamedPath>& outPaths)
+{
+  vector<const SGSequence*> seqs;
+  downloadSequences(seqs);
+  vector<const SGJoin*> joins;
+  downloadJoins(joins);
+
+  // download bases for every side graph sequence
+  outBases.resize(_sg->getNumSequences());
+  for (int i = 0; i < outBases.size(); ++i)
+  {
+    downloadBases(i, outBases[i]);
+  }
+
+  // keep downloading paths until there aren't any.
+  outPaths.clear();
+  NamedPath path;
+  int variantSetID;
+  int ret = 1; 
+  for (int i = 0; ret > 0; ++i)
+  {
+    path.first.clear();
+    path.second.clear();
+    ret = downloadAllele(i, path.second, variantSetID, path.first);
+    if (ret > 0)
+    {
+      outPaths.push_back(NamedPath());
+      swap(outPaths.back(), path);
+    }
+  }
+  
+  return getSideGraph();
+}
+
 int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
                                 int idx, int numSequences,
                                 int referenceSetID, int variantSetID)
@@ -182,8 +217,8 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   return outJoins.size();
 }
 
-int SGClient::downloadAllele(int alleleID, std::vector<SGSegment>& outPath,
-                             int& outVariantSetID, std::string& outName)
+int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
+                             int& outVariantSetID, string& outName)
 {
   outPath.clear();
 

@@ -13,6 +13,7 @@
 
 #include "sgclient.h"
 #include "download.h"
+#include "side2seq.h"
 
 using namespace std;
 
@@ -70,16 +71,23 @@ int main(int argc, char** argv)
   SGClient sgClient;
   sgClient.setURL(url);
 
-  vector<const SGSequence*> sequences;
-  vector<const SGJoin*> joins;
-  sgClient.downloadSequences(sequences);
-  string s;
-  sgClient.downloadBases(0, s);
-  sgClient.downloadJoins(joins);
-  // todo
-  //sgClient.downloadPaths(paths);
-  
+  // ith element is bases for sequence with id i in side graph
+  vector<string> bases;
+
+  // ith element is <name, segment vector> for allele i
+  vector<SGClient::NamedPath> paths;
+
+  const SideGraph* sg = sgClient.downloadGraph(bases, paths);
+
+  // convert side graph into sequence graph (which is stored 
+  Side2Seq converter;
+  converter.init(sg, &bases, &paths);
+  converter.convert();
+
+  cout << "INPUT " << endl;
   cout << *sgClient.getSideGraph() << endl;
+  cout << "OUTPUT " << endl;
+  cout << *converter.getOutGraph() << endl;
 
   
   

@@ -39,8 +39,12 @@ public:
    /** set URL to be used by all the other methods */
    void setURL(const std::string& baseURL);
 
-   /** Download a whole Side Graph */
-   const SideGraph* downloadGraph();
+   typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
+   /** Download a whole Side Graph into memory.  Topolgy gets stored 
+    * internally in (returned) SideGraph, path and bases get stored in 
+    * the given vectors */
+   const SideGraph* downloadGraph(std::vector<std::string>& outBases,
+                                  std::vector<NamedPath>& outPaths);
 
    /** Download sequences into the Side Graph. returns number of sequences */
    int downloadSequences(std::vector<const SGSequence*>& outSequences,
