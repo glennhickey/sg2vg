@@ -64,8 +64,9 @@ public:
                      int variantSetID = -1);
 
    
-   /** Download paths */
-   // todo
+   /** Download allele path.  returns -1 if path not found */
+   int downloadAllele(int alleleID, std::vector<SGSegment>& outPath,
+                      int& outVariantSetID, std::string& outName);
 
    /** SideGraph class, as currently implemented, only works with 
     * sequences with ids in [0, n), and it happily changes input id's 

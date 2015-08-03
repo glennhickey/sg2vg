@@ -32,7 +32,7 @@ vg.pb.h: vg.proto ${protobufPath}/libprotobuf.a
 vg.pb.o: vg.pb.h vg.pb.cc
 	${cpp} ${cppflags} -I . vg.pb.cc -c 
 
-sgclient.o: sgclient.cpp sgclient.h download.h ${sgExportPath}/*.h
+sgclient.o: sgclient.cpp sgclient.h download.h json2sg.h ${sgExportPath}/*.h
 	${cpp} ${cppflags} -I. sgclient.cpp -c
 
 download.o: download.cpp download.h 

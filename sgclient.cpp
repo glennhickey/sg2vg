@@ -83,12 +83,19 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   parser.parseSequences(result, sequences);
   for (int i = 0; i < sequences.size(); ++i)
   {
+    sg_int_t originalID = sequences[i]->getID();
+
+    // no name in the json.  so we give it a name based on original id
+    stringstream ss;
+    ss << "Seq" << originalID;
+    sequences[i]->setName(ss.str());
+    
     // store map to original id as Side Graph interface requires
     // ids be [0,n) which may be unessarily strict.  Too lazy right
     // now to track down SGExport code that depends on this..
-    sg_int_t originalID = sequences[i]->getID();
     const SGSequence* addedSeq = _sg->addSequence(sequences[i]);
     addSeqIDMapping(originalID, addedSeq->getID());
+
     outSequences.push_back(addedSeq);
   }
 
@@ -173,6 +180,31 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   }
 
   return outJoins.size();
+}
+
+int SGClient::downloadAllele(int alleleID, std::vector<SGSegment>& outPath,
+                             int& outVariantSetID, std::string& outName)
+{
+  outPath.clear();
+
+  stringstream opts;
+  opts << "/alleles/" << alleleID;
+  string path = opts.str();
+
+  const char* result = _download.getRequest(_url + path,
+                                            vector<string>());
+
+  int outID;
+  JSON2SG parser;
+  int ret = parser.parseAllele(result, outID, outPath, outVariantSetID,
+                               outName);
+
+  if (outID != alleleID)
+  {
+    throw runtime_error("AlleleID mismatch");
+  }
+
+  return ret;
 }
 
 string SGClient::getPostOptions(int pageToken,

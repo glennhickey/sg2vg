@@ -29,13 +29,14 @@ JSON2SG::~JSON2SG()
 int JSON2SG::parseSequences(const char* buffer,
                             std::vector<SGSequence*>& outSeqs)
 {
+  outSeqs.clear();
   Document json;
   json.Parse(buffer);
-  const Value& jsonSeqArray = json["sequences"];
-  if (!jsonSeqArray.IsArray())
+  if (!json.HasMember("sequences"))
   {
-    throw runtime_error("Error parsing JSON Sequences Array");
+    return -1;
   }
+  const Value& jsonSeqArray = json["sequences"];
   outSeqs.resize(jsonSeqArray.Size());
 
   // rapidjson uses SizeType instead of size_t.
@@ -50,47 +51,37 @@ int JSON2SG::parseSequences(const char* buffer,
 
 SGSequence JSON2SG::parseSequence(const Value& val)
 {
-  const Value& jsonLength = val["length"];
-  // not sure why stored in string and not int
-  assert(jsonLength.IsString());
-  stringstream ss;
-  ss << jsonLength.GetString();
-  sg_int_t sgLength;
-  ss >> sgLength;
-  const Value& jsonID = val["id"];
-  // not sure why stored in string and not int
-  assert(jsonID.IsString());
-  stringstream ss2;
-  ss2 << jsonID.GetString();
-  sg_int_t sgID;
-  ss2>> sgID;
-  return SGSequence(sgID, sgLength, "todo");
+  sg_int_t sgLength = extractStringVal<sg_int_t>(val, "length");
+  sg_int_t sgID = extractStringVal<sg_int_t>(val, "id");
+  // note: we don't seem to have a name field in the json
+  return SGSequence(sgID, sgLength, "");
 }
 
 int JSON2SG::parseBases(const char* buffer, string& outBases)
 {
+  outBases.clear();
   Document json;
   json.Parse(buffer);
-  const Value& jsonSeq = json["sequence"];
-  if (!jsonSeq.IsString())
+  if (!json.HasMember("sequence"))
   {
-    throw runtime_error("error parsing JSON sequence bases");
+    return -1;
   }
-  outBases.clear();
+  const Value& jsonSeq = json["sequence"];
   outBases = jsonSeq.GetString();
   return outBases.size();
 }
 
 int JSON2SG::parseJoins(const char* buffer, vector<SGJoin*>& outJoins)
 {
+  outJoins.clear();
   // Read in the JSON string into Side Graph objects
   Document json;
   json.Parse(buffer);
-  const Value& jsonJoinArray = json["joins"];
-  if (!jsonJoinArray.IsArray())
+  if (!json.HasMember("joins"))
   {
-    throw runtime_error("Error parsing JSON Joins Array");
+    return -1;
   }
+  const Value& jsonJoinArray = json["joins"];
   outJoins.resize(jsonJoinArray.Size());
   
   // rapidjson uses SizeType instead of size_t.
@@ -108,9 +99,7 @@ SGSide JSON2SG::parseSide(const Value& val)
 {
   assert(!val.IsNull());
   SGPosition pos = parsePosition(val["base"]);
-  const Value& jsonStrand = val["strand"];
-  assert(jsonStrand.IsString());
-  string strand = jsonStrand.GetString();
+  string strand = extractStringVal<string>(val, "strand");
   assert(strand == "POS_STRAND" || strand == "NEG_STRAND");
   bool forward = strand == "POS_STRAND";
   return SGSide(pos, forward);
@@ -118,20 +107,60 @@ SGSide JSON2SG::parseSide(const Value& val)
 
 SGPosition JSON2SG::parsePosition(const Value& val)
 {
-  assert(!val.IsNull());
-  const Value& jsonPos = val["position"];
-  // not sure why stored in string and not int
-  assert(jsonPos.IsString());
-  stringstream ss;
-  ss << jsonPos.GetString();
-  sg_int_t pos;
-  ss >> pos;
-  const Value& jsonSeqID = val["sequenceId"];
-  // not sure why stored in string and not int
-  assert(jsonSeqID.IsString());
-  stringstream ss2;
-  ss2 << jsonSeqID.GetString();
-  sg_int_t seqid;
-  ss2 >> seqid;
+  sg_int_t pos = extractStringVal<sg_int_t>(val, "position");
+  sg_int_t seqid = extractStringVal<sg_int_t>(val, "sequenceId");
   return SGPosition(seqid, pos);
+}
+
+int JSON2SG::parseAllele(const char* buffer, int& outID,
+                         vector<SGSegment>& outPath,
+                         int& outVariantSetID, string& outName)
+{
+  outPath.clear();  
+  Document json;
+  json.Parse(buffer);
+
+  if (!json.HasMember("name") ||
+      !json.HasMember("path") ||
+      !json.HasMember("id") ||
+      !json.HasMember("variantSetId"))
+  {
+    return -1;
+  }
+
+  outID = extractStringVal<int>(json, "id");
+         
+  const Value& jsonPath = json["path"];
+  parseAllelePath(jsonPath, outPath);
+
+  outVariantSetID = extractStringVal<int>(json, "variantSetId");
+  outName = extractStringVal<string>(json, "name");
+
+  return outPath.size();
+}
+
+int JSON2SG::parseAllelePath(const rapidjson::Value& val,
+                             vector<SGSegment>& outPath)
+{
+  assert(val.HasMember("segments"));
+  const Value& jsonSegmentArray = val["segments"];
+  outPath.resize(jsonSegmentArray.Size());
+  
+  // rapidjson uses SizeType instead of size_t.
+  for (SizeType i = 0; i < jsonSegmentArray.Size(); i++)
+  {
+    SGSegment sgSeg = parseSegment(jsonSegmentArray[i]);
+    outPath[i] = sgSeg;
+  }
+  return outPath.size();
+}
+
+SGSegment JSON2SG::parseSegment(const Value& val)
+{
+  assert(val.HasMember("start"));
+  assert(val.HasMember("length"));
+
+  SGSide sgSide = parseSide(val["start"]);
+  int length = extractStringVal<int>(val, "length");
+  return SGSegment(sgSide, length);
 }
