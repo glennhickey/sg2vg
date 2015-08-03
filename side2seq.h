@@ -10,11 +10,11 @@
 #include <string>
 #include <vector>
 #include <limits>
-
+#include <set>
 #include <sstream>
+
 #include "sidegraph.h"
 #include "sglookup.h"
-
 
 /** 
 Core logic for converting a Side Graph into a Sequence Graph.  
@@ -57,10 +57,33 @@ public:
    /** Get the converted paths.  The ith element is the path in outgraph
     * that was converted from the ith path in the input bases */
    const std::vector<NamedPath>& getOutPaths() const;
-   
-   
+
+   /** get dna from an input sequence by id */
+   void getInDNA(sg_int_t seqID, sg_int_t pos, sg_int_t length,
+                 std::string& outDNA) const;
+
 protected:
 
+   /** chop up a sequence from input graph by every join, and add fragments
+    * as new sequences to the output graph, updating lookup structure */
+   void convertSequence(const SGSequence* seq);
+   void addOutSequence(const SGSequence* inSeq,
+                       const SGPosition& first, const SGPosition& last);
+
+   /** map a join onto the out graph by looking up its endpoints */
+   void convertJoin(const SGJoin* join);
+
+   /** map a path to the out graph */
+   void convertPath(int inPathIdx);
+
+   /** get all positions in range that are incident to one or more joins */
+   int getIncidentJoins(const SGSide& start, const SGSide& end,
+                        std::set<SGSide>& outSides) const;
+
+   /** generate a name for a sequence in the output graph */
+   std::string getOutSeqName(const SGSequence* inSeq, const SGPosition& first,
+                             int length) const;
+   
    const SideGraph* _inGraph;
    const std::vector<std::string>* _inBases;
    const std::vector<NamedPath>* _inPaths;
@@ -68,6 +91,16 @@ protected:
    SideGraph* _outGraph;
    std::vector<std::string> _outBases;
    std::vector<NamedPath> _outPaths;
+
+   // map Side Graph to Sequence Graph coords. 
+   SGLookup _luTo;
+
+   // order joins based on side 2 (SideGraph orders them on side 1)
+   struct SGJoinPtrSide2Less {
+      bool operator()(const SGJoin* j1, const SGJoin* j2) const;
+   };
+   typedef std::set<const SGJoin*, SGJoinPtrSide2Less> JoinSet2;
+   JoinSet2 _joinSet2;
 };
 
 inline const SideGraph* Side2Seq::getOutGraph() const
@@ -83,6 +116,20 @@ inline const std::vector<std::string>& Side2Seq::getOutBases() const
 inline const std::vector<Side2Seq::NamedPath>& Side2Seq::getOutPaths() const
 {
   return _outPaths;
+}
+
+inline void Side2Seq::getInDNA(sg_int_t seqID, sg_int_t pos, sg_int_t length,
+                               std::string& outDNA) const
+{
+  outDNA = _inBases->at(seqID).substr(pos, length);
+}
+
+inline bool Side2Seq::SGJoinPtrSide2Less::operator()(const SGJoin* j1,
+                                                     const SGJoin* j2) const
+{
+  return j1->getSide2() < j2->getSide2() || (
+    j1->getSide2() == j2->getSide2() &&
+    j1->getSide1() < j2->getSide1());
 }
 
 
