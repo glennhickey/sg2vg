@@ -124,8 +124,7 @@ void Side2Seq::convertSequence(const SGSequence* seq)
     const SGSequence* ts = _outGraph->getSequence(j);
     SGSide side1(SGPosition(fs->getID(), fs->getLength() - 1), false);
     SGSide side2(SGPosition(ts->getID(), 0), true);
-    _outGraph->addJoin(new SGJoin(side1, side2));
-    //cerr << "\nNJ " << SGJoin(side1, side2) << endl;
+     _outGraph->addJoin(new SGJoin(side1, side2));
   }
 }
 
@@ -197,13 +196,12 @@ void Side2Seq::convertPath(int inPathIdx)
       {
         SGJoin bridge(frag[j-1].getOutSide(),
                       frag[j].getInSide());
-        if (_outGraph->getJoin(&bridge) != NULL)
+        if (_outGraph->getJoin(&bridge) == NULL)
         {
           stringstream ss;
           ss << "Error converting " << inPathIdx << "th path with name="
              << inPath.first << ": missing join " << bridge;
-//          throw runtime_error(ss.str());
-          cerr << endl << ss.str() << endl;
+          throw runtime_error(ss.str());
         }
       }
       outPath.second.push_back(frag[j]);
