@@ -140,19 +140,25 @@ void SG2VGJSON::addInt(Value& value, const string& name, int v)
 {
   Value intValue;
   intValue.SetInt(v);
-  value.AddMember(StringRef(name.c_str()), intValue, allocator());
+  Value nameValue;
+  nameValue.SetString(name.c_str(), name.length(), allocator());
+  value.AddMember(nameValue, intValue, allocator());
 }
 
 void SG2VGJSON::addString(Value& value, const string& name, const string& v)
 {
   Value stringValue;
   stringValue.SetString(v.c_str(), v.length(), allocator());
-  value.AddMember(StringRef(name.c_str()), stringValue, allocator());
+  Value nameValue;
+  nameValue.SetString(name.c_str(), name.length(), allocator());
+  value.AddMember(nameValue, stringValue, allocator());
 }
 
 void SG2VGJSON::addBool(Value& value, const string& name, bool v)
 {
   Value boolValue;
   boolValue.SetBool(v);
-  value.AddMember(StringRef(name.c_str()), boolValue, allocator());
+  Value nameValue;
+  nameValue.SetString(name.c_str(), name.length(), allocator());
+  value.AddMember(nameValue, boolValue, allocator());
 }
