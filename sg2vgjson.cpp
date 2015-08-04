@@ -31,7 +31,11 @@ void SG2VGJSON::init(ostream* os)
   delete _doc;
 
   _doc = new Document();
-  _doc->Parse("{node: [], edge: [], path: []}");
+  _doc->Parse("{\"node\": [], \"edge\": [], \"path\": []}");
+  assert(_doc->IsObject());
+  assert(nodes().IsArray());
+  assert(edges().IsArray());
+  assert(paths().IsArray());
 }
 
 void SG2VGJSON::writeGraph(const SideGraph* sg,
@@ -74,8 +78,9 @@ void SG2VGJSON::writeGraph(const SideGraph* sg,
 }
 
 void SG2VGJSON::addNode(const SGSequence* seq)
-{
+{  
   Value node;
+  node.SetObject();
   addString(node, "sequence", _bases->at(seq->getID()));
   addString(node, "name", seq->getName());
   addInt(node, "id", seq->getID());
@@ -85,6 +90,7 @@ void SG2VGJSON::addNode(const SGSequence* seq)
 void SG2VGJSON::addEdge(const SGJoin* join)
 {
   Value edge;
+  edge.SetObject();
   addInt(edge, "from", join->getSide1().getBase().getSeqID());
   addInt(edge, "to", join->getSide2().getBase().getSeqID());
   addBool(edge, "from_start", join->getSide1().getBase().getPos() == 0);
@@ -96,6 +102,7 @@ void SG2VGJSON::addEdge(const SGJoin* join)
       join->getSide2().getBase().getSeqID())
   {
     Value edge;
+    edge.SetObject();
     addInt(edge, "from", join->getSide2().getBase().getSeqID());
     addInt(edge, "to", join->getSide1().getBase().getSeqID());
     addBool(edge, "from_start", join->getSide2().getBase().getPos() == 0);
@@ -107,16 +114,19 @@ void SG2VGJSON::addEdge(const SGJoin* join)
 void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
 {
   Value jpath;
+  jpath.SetObject();
   addString(jpath, "name", name);
   Value mappings;
   mappings.SetArray();
   for (int i = 0; i < path.size(); ++i)
   {
     Value position;
+    position.SetObject();
     addInt(position, "node_id", path[i].getSide().getBase().getSeqID());
     addInt(position, "offset", 0);
     
     Value mapping;
+    mapping.SetObject();
     mapping.AddMember("position", position, allocator());
     addBool(mapping, "is_reverse", !path[i].getSide().getForward());
     mappings.PushBack(mapping, allocator());
@@ -136,7 +146,7 @@ void SG2VGJSON::addInt(Value& value, const string& name, int v)
 void SG2VGJSON::addString(Value& value, const string& name, const string& v)
 {
   Value stringValue;
-  stringValue.SetString(StringRef(v.c_str()));
+  stringValue.SetString(v.c_str(), v.length(), allocator());
   value.AddMember(StringRef(name.c_str()), stringValue, allocator());
 }
 

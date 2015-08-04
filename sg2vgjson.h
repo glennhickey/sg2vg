@@ -82,17 +82,17 @@ protected:
 
 inline rapidjson::Value& SG2VGJSON::nodes()
 {
-  return (*_doc)["nodes"];
+  return (*_doc)["node"];
 }
 
 inline rapidjson::Value& SG2VGJSON::edges()
 {
-  return (*_doc)["edges"];
+  return (*_doc)["edge"];
 }
 
 inline rapidjson::Value& SG2VGJSON::paths()
 {
-  return (*_doc)["paths"];
+  return (*_doc)["path"];
 }
 
 inline rapidjson::Document::AllocatorType& SG2VGJSON::allocator()
