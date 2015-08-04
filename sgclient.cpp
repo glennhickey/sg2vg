@@ -20,7 +20,7 @@ using namespace rapidjson;
 
 const string SGClient::CTHeader = "Content-Type: application/json";
 
-SGClient::SGClient() : _sg(0)
+SGClient::SGClient() : _sg(0), _os(0)
 {
 
 }
@@ -35,6 +35,7 @@ void SGClient::erase()
   delete _sg;
   _url = "";
   _sg = 0;
+  _os = 0;
 }
 
 void SGClient::setURL(const string& baseURL)
@@ -61,22 +62,42 @@ void SGClient::setURL(const string& baseURL)
   _sg = new SideGraph();
 }
 
+void SGClient::setOS(ostream* os)
+{
+  _os = os;
+}
+
+ostream& SGClient::os()
+{
+  return _os != NULL ? *_os : _ignore;
+}
+
 const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
                                          vector<NamedPath>& outPaths)
 {
   vector<const SGSequence*> seqs;
+  os() << "Downloading Sequences...";
   downloadSequences(seqs);
+  os() << " (" << seqs.size() << " sequences retrieved)" << endl;
   vector<const SGJoin*> joins;
+  os() << "Downloading Joins...";
   downloadJoins(joins);
+  os() << " (" << joins.size() << " joins retrieved)" << endl;
 
   // download bases for every side graph sequence
+  
+  os() << "Downloading bases for" << _sg->getNumSequences() << "... ";
+  int basesCount = 0;
   outBases.resize(_sg->getNumSequences());
   for (int i = 0; i < outBases.size(); ++i)
   {
     downloadBases(i, outBases[i]);
+    basesCount += outBases[i].length();
   }
+  os() << " (" << basesCount << " bases retrieved)" << endl;
 
   // keep downloading paths until there aren't any.
+  os() << "Downloading allele paths... ";
   outPaths.clear();
   NamedPath path;
   int variantSetID;
@@ -92,6 +113,7 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
       swap(outPaths.back(), path);
     }
   }
+  os() << "(" << outPaths.size() << " paths retrieved)" << endl;
   
   return getSideGraph();
 }

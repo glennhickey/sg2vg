@@ -70,6 +70,7 @@ int main(int argc, char** argv)
 
   SGClient sgClient;
   sgClient.setURL(url);
+  sgClient.setOS(&cerr);
 
   // ith element is bases for sequence with id i in side graph
   vector<string> bases;

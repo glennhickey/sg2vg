@@ -39,6 +39,9 @@ public:
    /** set URL to be used by all the other methods */
    void setURL(const std::string& baseURL);
 
+   /** print a few messages here if specified */
+   void setOS(std::ostream* os);
+
    typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
    /** Download a whole Side Graph into memory.  Topolgy gets stored 
     * internally in (returned) SideGraph, path and bases get stored in 
@@ -89,12 +92,15 @@ public:
    const SideGraph* getSideGraph() const;
    
 protected:
-
+   
    /** Build the JSON string for some common options */
    std::string getPostOptions(int pageToken,
                               int pageSize,
                               int referenceSetID,
                               int variantSetID) const;
+
+   /** Print logging messages here */
+   std::ostream& os();
 
    static const std::string CTHeader;
    
@@ -105,7 +111,8 @@ protected:
    // have arbitrary ids.
    std::unordered_map<sg_int_t, sg_int_t> _toOrigSeqId;
    std::unordered_map<sg_int_t, sg_int_t> _fromOrigSeqId;
-
+   std::ostream* _os;
+   std::stringstream _ignore;
 };
 
 inline sg_int_t SGClient::getOriginalSeqID(sg_int_t sgID) const
