@@ -75,10 +75,16 @@ ostream& SGClient::os()
 const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
                                          vector<NamedPath>& outPaths)
 {
+  map<int, string> refIDMap;
+  os() << "Downloading References...";
+  downloadReferences(refIDMap);
+  os() << " (" << refIDMap.size() << " references retrieved)" << endl;
+  
   vector<const SGSequence*> seqs;
   os() << "Downloading Sequences...";
-  downloadSequences(seqs);
+  downloadSequences(seqs, &refIDMap);
   os() << " (" << seqs.size() << " sequences retrieved)" << endl;
+  
   vector<const SGJoin*> joins;
   os() << "Downloading Joins...";
   downloadJoins(joins);
@@ -119,6 +125,7 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 }
 
 int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
+                                const map<int, string>* nameIdMap,
                                 int idx, int numSequences,
                                 int referenceSetID, int variantSetID)
 {
@@ -137,15 +144,40 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   // Parse the JSON output into a Sequences array and add it to the side graph
   JSON2SG parser;
   vector<SGSequence*> sequences;
-  parser.parseSequences(result, sequences);
+  int ret = parser.parseSequences(result, sequences);
+  if (ret == -1)
+  {
+    stringstream ss;
+    ss << "Error: POST request for Sequences returned " << result;
+    throw runtime_error(ss.str());
+  }
+  
   for (int i = 0; i < sequences.size(); ++i)
   {
     sg_int_t originalID = sequences[i]->getID();
 
-    // no name in the json.  so we give it a name based on original id
-    stringstream ss;
-    ss << "Seq" << originalID;
-    sequences[i]->setName(ss.str());
+    // no name in the json.  no references loaded.  so we give it a name
+    // based on original id
+    if (nameIdMap == NULL)
+    {
+      stringstream ss;
+      ss << "Seq" << originalID;
+      sequences[i]->setName(ss.str());
+    }
+    // name mapped from reference name
+    else
+    {
+      map<int, string>::const_iterator si = nameIdMap->find(
+        sequences[i]->getID());
+      if (si == nameIdMap->end())
+      {
+        stringstream ss;
+        ss << "Error: Could not find Reference with for sequence id "
+           << sequences[i]->getID();
+        throw runtime_error(ss.str());
+      }
+      sequences[i]->setName(si->second);
+    }
     
     // store map to original id as Side Graph interface requires
     // ids be [0,n) which may be unessarily strict.  Too lazy right
@@ -157,6 +189,40 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   }
 
   return outSequences.size();
+}
+
+int SGClient::downloadReferences(map<int, string>& outIdMap,
+                                 int idx,
+                                 int numReferences,
+                                 int referenceSetID)
+{
+  outIdMap.clear();
+    
+  string postOptions = getReferencePostOptions(idx, numReferences,
+                                               referenceSetID,
+                                               vector<int>(),
+                                               vector<string>(),
+                                               vector<string>(),
+                                               vector<string>());
+
+  string path = "/references/search";
+
+  // Send the Request
+  const char* result = _download.postRequest(_url + path,
+                                             vector<string>(1, CTHeader),
+                                             postOptions);
+
+  // Parse the JSON output into a Sequences array and add it to the side graph
+  JSON2SG parser;
+  int ret = parser.parseReferences(result, outIdMap);
+  if (ret == -1)
+  {
+    stringstream ss;
+    ss << "Error: POST request for References returned " << result;
+    throw runtime_error(ss.str());
+  }
+
+  return outIdMap.size();
 }
 
 int SGClient::downloadBases(sg_int_t sgSeqID, string& outBases, int start,
@@ -198,7 +264,14 @@ int SGClient::downloadBases(sg_int_t sgSeqID, string& outBases, int start,
 
   // Parse the JSON output into a string
   JSON2SG parser;
-  parser.parseBases(result, outBases);
+  int ret = parser.parseBases(result, outBases);
+  if (ret == -1)
+  {
+    stringstream ss;
+    ss << "Error: GET request for Bases for seqid=" << sgSeqID
+       << " returned " << result;
+    throw runtime_error(ss.str());
+  }
 
   if (outBases.length() != queryLen)
   {
@@ -229,7 +302,14 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   // Parse the JSON output into a Joins array and add it to the side graph
   JSON2SG parser;
   vector<SGJoin*> joins;
-  parser.parseJoins(result, joins);
+  int ret = parser.parseJoins(result, joins);
+  if (ret == -1)
+  {
+    stringstream ss;
+    ss << "Error: POST request for Joins returned " << result;
+    throw runtime_error(ss.str());
+  }
+  
   for (int i = 0; i < joins.size(); ++i)
   {
     mapSeqIDsInJoin(*joins[i]);
@@ -265,9 +345,9 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
 }
 
 string SGClient::getPostOptions(int pageToken,
-                              int pageSize,
-                              int referenceSetID,
-                              int variantSetID) const
+                                int pageSize,
+                                int referenceSetID,
+                                int variantSetID) const
 {
    // Build JSON POST Options
   Document doc;
@@ -291,8 +371,66 @@ string SGClient::getPostOptions(int pageToken,
   {
     doc["variantSetId"].SetInt64(variantSetID);
   }
+  
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
   doc.Accept(writer);
   return buffer.GetString();
 }
+
+string SGClient::getReferencePostOptions(int pageToken,
+                                         int pageSize,
+                                         int referenceSetID,
+                                         const vector<int>& seqIDs,
+                                         const vector<string>& md5s,
+                                         const vector<string>& accs,
+                                         const vector<string>& rnames) const
+{
+  // Build JSON POST Options
+  Document doc;
+  doc.Parse("{}");
+  Value nv;
+  assert(nv.IsNull());
+  doc.AddMember("pageSize", nv, doc.GetAllocator());
+  doc["pageSize"].SetInt64(pageSize);
+  doc.AddMember("pageToken", nv, doc.GetAllocator());
+  if (pageToken > 0)
+  {
+    doc["pageToken"].SetInt64(pageToken);
+  }
+  doc.AddMember("referenceSetId", nv, doc.GetAllocator());
+  if (referenceSetID >= 0)
+  {
+    doc["referenceSetId"].SetInt64(referenceSetID);
+  }
+
+  if (seqIDs.size() > 0 ||
+      md5s.size() > 0 ||
+      accs.size() > 0 ||
+      rnames.size() > 0)
+  {
+    throw runtime_error("NOT IMPLEMENTED");
+  }
+
+  Value jsonIds;
+  jsonIds.SetArray();
+  doc.AddMember("sequenceIds", jsonIds, doc.GetAllocator());
+  
+  Value jsonMd5s;
+  jsonMd5s.SetArray();
+  doc.AddMember("md5checksums", jsonMd5s, doc.GetAllocator());
+
+  Value jsonAccessions;
+  jsonAccessions.SetArray();
+  doc.AddMember("accessions", jsonAccessions, doc.GetAllocator());
+
+  Value jsonNames;
+  jsonNames.SetArray();
+  doc.AddMember("referenceNames", jsonNames, doc.GetAllocator());
+  
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
+  

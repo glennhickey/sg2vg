@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <map>
 #include <unordered_map>
 
 #include <sstream>
@@ -48,13 +49,23 @@ public:
     * the given vectors */
    const SideGraph* downloadGraph(std::vector<std::string>& outBases,
                                   std::vector<NamedPath>& outPaths);
-
-   /** Download sequences into the Side Graph. returns number of sequences */
+   
+   /** Download sequences into the Side Graph. returns number of sequences.
+    * call after downloadReferences.  In order to get sequence names,
+    * pass nameIdMap as downloaded by downloadReferences() */
    int downloadSequences(std::vector<const SGSequence*>& outSequences,
+                         const std::map<int, std::string>* nameIdMap,
                          int idx = 0,
                          int numSequences = std::numeric_limits<int>::max(),
                          int referenceSetID = -1,
                          int variantSetID = -1);
+
+   /** Download reference ids and build sequence id -> reference name map
+    * ignoring everything else */
+   int downloadReferences(std::map<int, std::string>& outIdMap,
+                          int idx = 0,
+                          int numReferences = std::numeric_limits<int>::max(),
+                          int referenceSetID = -1);
 
    /** Download the DNA bases for a given sequence.  Note the ID here is
     * the mapped ID (ie used by SideGraph class) */
@@ -99,6 +110,16 @@ protected:
                               int referenceSetID,
                               int variantSetID) const;
 
+   /** get references post takes some different options */
+   std::string getReferencePostOptions(int pageToken,
+                                       int pageSize,
+                                       int referenceSetID,
+                                       const std::vector<int>& seqIDs,
+                                       const std::vector<std::string>& md5s,
+                                       const std::vector<std::string>& accs,
+                                       const std::vector<std::string>& rnames)
+     const;
+            
    /** Print logging messages here */
    std::ostream& os();
 

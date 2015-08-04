@@ -273,7 +273,7 @@ string Side2Seq::getOutSeqName(const SGSequence* inSeq,
                                int length) const
 {
   stringstream ss;
-  ss << inSeq->getName() << "_" << first;
+  ss << inSeq->getName() << "_" << first.getPos();
   return ss.str();
 }
 

@@ -8,6 +8,7 @@
 #define _JSON2SG_H
 
 #include <vector>
+#include <map>
 #include <string>
 
 #include "rapidjson/document.h"
@@ -33,6 +34,9 @@ public:
 
    /** Parse single sequence. */
    SGSequence parseSequence(const rapidjson::Value& val);
+
+   /** Parse references into id->name map */
+   int parseReferences(const char* buffer, std::map<int, std::string>& outMap);
 
    /** Parse squence bases. 
     * returns number of bases or -1 if error */

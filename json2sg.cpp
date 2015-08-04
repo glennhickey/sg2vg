@@ -57,6 +57,28 @@ SGSequence JSON2SG::parseSequence(const Value& val)
   return SGSequence(sgID, sgLength, "");
 }
 
+int JSON2SG::parseReferences(const char* buffer,
+                            map<int, string>& outMap)
+{
+  outMap.clear();
+  Document json;
+  json.Parse(buffer);
+  if (!json.HasMember("references"))
+  {
+    return -1;
+  }
+  const Value& jsonRefs = json["references"];
+  assert(jsonRefs.IsArray());
+  for (SizeType i = 0; i < jsonRefs.Size(); i++)
+  {
+    const Value& refVal = jsonRefs[i];
+    string name = extractStringVal<string>(refVal, "name");
+    int id = extractStringVal<int>(refVal, "sequenceId");
+    outMap.insert(pair<int, string>(id, name));
+  }
+  return outMap.size();
+}
+
 int JSON2SG::parseBases(const char* buffer, string& outBases)
 {
   outBases.clear();
