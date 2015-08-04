@@ -92,7 +92,8 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 
   // download bases for every side graph sequence
   
-  os() << "Downloading bases for" << _sg->getNumSequences() << "... ";
+  os() << "Downloading bases for " << _sg->getNumSequences()
+       << " sequences... ";
   int basesCount = 0;
   outBases.resize(_sg->getNumSequences());
   for (int i = 0; i < outBases.size(); ++i)

@@ -94,9 +94,11 @@ const char* Download::postRequest(const string& url,
 
   curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, postData.c_str());
 
-  #ifndef _NDEBUG
+#ifndef NDEBUG
   curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
-  #endif
+#else
+  curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0L);
+#endif
 
   res = curl_easy_perform(curl_handle);
 
@@ -143,10 +145,12 @@ const char* Download::getRequest(const string& url,
   /* we pass our 'chunk' struct to the callback function */ 
   curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&_buffer);
 
-  #ifndef _NDEBUG
+#ifndef NDEBUG
   curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
-  #endif
-
+#else
+  curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0L);
+#endif
+  
   res = curl_easy_perform(curl_handle);
 
   /* Check for errors */ 

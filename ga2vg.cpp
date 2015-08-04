@@ -67,8 +67,6 @@ int main(int argc, char** argv)
   
   string url = argv[1];
 
-  cerr << "url " << url << endl;
-
   SGClient sgClient;
   sgClient.setURL(url);
   sgClient.setOS(&cerr);
@@ -81,7 +79,8 @@ int main(int argc, char** argv)
 
   const SideGraph* sg = sgClient.downloadGraph(bases, paths);
 
-  // convert side graph into sequence graph (which is stored 
+  // convert side graph into sequence graph (which is stored
+  cerr << "Converting Side Graph to VG Sequence Graph" << endl;
   Side2Seq converter;
   converter.init(sg, &bases, &paths);
   converter.convert();
@@ -91,6 +90,7 @@ int main(int argc, char** argv)
   const vector<SGClient::NamedPath>& outPaths = converter.getOutPaths();
   
   // write to vg json
+  cerr << "Writing VG JSON to stdout" << endl;
   SG2VGJSON jsonWriter;
   jsonWriter.init(&cout);
   jsonWriter.writeGraph(outGraph, outBases, outPaths);
