@@ -74,7 +74,9 @@ void SG2VGJSON::writeGraph(const SideGraph* sg,
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
   _doc->Accept(writer);
-  *_os << buffer.GetString();
+  // make that a 3rd time -- strip outer nesting {}'s.
+  string temp(buffer.GetString());
+  *_os << temp.substr(1, temp.length()-1);
 }
 
 void SG2VGJSON::addNode(const SGSequence* seq)
