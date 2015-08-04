@@ -86,16 +86,37 @@ int main(int argc, char** argv)
   converter.init(sg, &bases, &paths);
   converter.convert();
 
+  const SideGraph* outGraph = converter.getOutGraph();
+  const vector<string>& outBases = converter.getOutBases();
+  const vector<SGClient::NamedPath>& outPaths = converter.getOutPaths();
+  
   // write to vg json
   SG2VGJSON jsonWriter;
   jsonWriter.init(&cout);
-  jsonWriter.writeGraph(sg, bases, paths);
+  jsonWriter.writeGraph(outGraph, outBases, outPaths);
   
   cerr << "INPUT " << endl;
   cerr << *sgClient.getSideGraph() << endl;
   cerr << "OUTPUT " << endl;
-  cerr << *converter.getOutGraph() << endl;
+  cerr << *outGraph << endl;
 
-  
+  for (int i = 0; i < outPaths.size(); ++i)
+  {
+    cerr << "path " << i << ":\n";
+    cerr << "input " << "name=" << outPaths[i].first;
+    for (int j = 0; j < outPaths[i].second.size(); ++j)
+    {
+      cerr << outPaths[i].second[j] << ", ";
+    }
+    cerr << endl;
+    cerr << "output " << "name=" << outPaths[i].first;
+    for (int j = 0; j < outPaths[i].second.size(); ++j)
+    {
+      cerr << outPaths[i].second[j] << ", ";
+    }
+    cerr << endl;
+
+  }
+
   Download::cleanup();
 }
