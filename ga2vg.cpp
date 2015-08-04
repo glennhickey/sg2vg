@@ -14,6 +14,7 @@
 #include "sgclient.h"
 #include "download.h"
 #include "side2seq.h"
+#include "sg2vgjson.h"
 
 using namespace std;
 
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
   
   string url = argv[1];
 
-  cout << "url " << url << endl;
+  cerr << "url " << url << endl;
 
   SGClient sgClient;
   sgClient.setURL(url);
@@ -85,12 +86,16 @@ int main(int argc, char** argv)
   converter.init(sg, &bases, &paths);
   converter.convert();
 
-  cout << "INPUT " << endl;
-  cout << *sgClient.getSideGraph() << endl;
-  cout << "OUTPUT " << endl;
-  cout << *converter.getOutGraph() << endl;
-
+  // write to vg json
+  SG2VGJSON jsonWriter;
+  jsonWriter.init(&cout);
+  jsonWriter.writeGraph(sg, bases, paths);
   
+  cerr << "INPUT " << endl;
+  cerr << *sgClient.getSideGraph() << endl;
+  cerr << "OUTPUT " << endl;
+  cerr << *converter.getOutGraph() << endl;
+
   
   Download::cleanup();
 }
