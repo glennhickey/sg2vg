@@ -79,6 +79,9 @@ protected:
    /** map a join onto the out graph by looking up its endpoints */
    void convertJoin(const SGJoin* join);
 
+   /** make sure end points of join are ends of sequence */
+   void verifyOutJoin(const SGJoin* join);
+
    /** map a path to the out graph */
    void convertPath(int inPathIdx);
 

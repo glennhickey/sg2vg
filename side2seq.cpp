@@ -124,7 +124,8 @@ void Side2Seq::convertSequence(const SGSequence* seq)
     const SGSequence* ts = _outGraph->getSequence(j);
     SGSide side1(SGPosition(fs->getID(), fs->getLength() - 1), false);
     SGSide side2(SGPosition(ts->getID(), 0), true);
-     _outGraph->addJoin(new SGJoin(side1, side2));
+    const SGJoin* newJoin = _outGraph->addJoin(new SGJoin(side1, side2));
+    verifyOutJoin(newJoin);
   }
 }
 
@@ -156,7 +157,30 @@ void Side2Seq::convertJoin(const SGJoin* join)
   ret1.setForward(join->getSide1().getForward());
   ret2.setForward(join->getSide2().getForward());
   SGJoin* outJoin = new SGJoin(ret1, ret2);
+  verifyOutJoin(outJoin);
   _outGraph->addJoin(outJoin);
+}
+
+void Side2Seq::verifyOutJoin(const SGJoin* join)
+{
+  const SGPosition& p1 = join->getSide1().getBase();
+  const SGSequence* s1 = _outGraph->getSequence(p1.getSeqID());
+  const SGPosition& p2 = join->getSide2().getBase();
+  const SGSequence* s2 = _outGraph->getSequence(p2.getSeqID());
+
+  bool g1 = (p1.getPos() == 0 && join->getSide1().getForward()) ||
+     (p1.getPos() == s1->getLength() - 1 && !join->getSide1().getForward());
+  bool g2 = (p2.getPos() == 0 && join->getSide2().getForward()) ||
+     (p2.getPos() == s2->getLength() - 1 && !join->getSide2().getForward());
+
+  if (!g1 || !g2)
+  {
+    stringstream ss;
+    ss << "Output join, " << *join << " is bad because it doesn't abut"
+       << " sequence ends"
+       << ". This is probably a BUG, please report it!";
+    throw runtime_error(ss.str());
+  }
 }
 
 void Side2Seq::convertPath(int inPathIdx)
@@ -200,7 +224,8 @@ void Side2Seq::convertPath(int inPathIdx)
         {
           stringstream ss;
           ss << "Error converting " << inPathIdx << "th path with name="
-             << inPath.first << ": missing join " << bridge;
+             << inPath.first << ": missing join " << bridge
+             << ". This is probably a BUG, please report it!";
           throw runtime_error(ss.str());
         }
       }
@@ -212,7 +237,8 @@ void Side2Seq::convertPath(int inPathIdx)
     {
       stringstream ss;
       ss << "Error converting " << inPathIdx << "th path with name="
-         << inPath.first << ": output path does not match";
+         << inPath.first << ": output path does not match"
+         << ". This is probably a BUG, please report it!";
       throw runtime_error(ss.str());
     }
   }
