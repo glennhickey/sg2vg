@@ -17,7 +17,7 @@ Download entire graph from server into memory.  Cut sequences so that all joins 
 
 ## Instructions
 
-*Dependency* libcurl needs to be installed.  
+**Dependency:** libcurl needs to be installed.
 
 **Cloning:** Don't forget to clone submodules:
 
