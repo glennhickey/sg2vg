@@ -11,8 +11,9 @@
 #include <vector>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 
-#include "SideGraph.h"
+#include "sidegraph.h"
 
 
 /** 

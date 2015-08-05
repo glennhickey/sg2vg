@@ -44,9 +44,9 @@ void SGClient::setURL(const string& baseURL)
   
   _url = baseURL;
   assert(_url.length() > 1);
-  if (_url.back() == '/')
+  if (_url[_url.length() - 1] == '/')
   {
-    _url.pop_back();
+    _url.resize(_url.length() - 1);
   }
 
   size_t lastSlash = _url.find_last_of("/");

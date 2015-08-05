@@ -12,6 +12,7 @@
 #include <limits>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 
 #include "sidegraph.h"
 #include "sglookup.h"

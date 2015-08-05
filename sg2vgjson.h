@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "rapidjson/document.h"
 

@@ -11,11 +11,11 @@
 #include <vector>
 #include <limits>
 #include <map>
-#include <unordered_map>
+#include <stdexcept>
 
 #include <sstream>
-#include "SideGraph.h"
-#include "Download.h"
+#include "sidegraph.h"
+#include "download.h"
 
 
 /** 
@@ -130,8 +130,8 @@ protected:
    Download _download;
    // sucky hack: to do: fix sidegraph and lookup to let sequences
    // have arbitrary ids.
-   std::unordered_map<sg_int_t, sg_int_t> _toOrigSeqId;
-   std::unordered_map<sg_int_t, sg_int_t> _fromOrigSeqId;
+   std::map<sg_int_t, sg_int_t> _toOrigSeqId;
+   std::map<sg_int_t, sg_int_t> _fromOrigSeqId;
    std::ostream* _os;
    std::stringstream _ignore;
 };

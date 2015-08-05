@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <stdexcept>
 
 #include "rapidjson/document.h"
 
