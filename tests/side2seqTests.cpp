@@ -241,10 +241,58 @@ void inversionTest(CuTest *testCase)
   CuAssertTrue(testCase, outGraph->getJoinSet()->size() == 12);
 }
 
+///////////////////////////////////////////////////////////
+//  doubleCut test
+// case that first came up in camel-brca1 where segment cut
+// failed because of equivalent join sides being processed
+// when fragmenting segment 
+// 
+///////////////////////////////////////////////////////////
+void doubleCutTest(CuTest *testCase)
+{
+  CuAssertTrue(testCase, true);
+
+  SideGraph sg;
+    
+  SGPosition p1a(0, 5);
+  SGPosition p1b(0, 6);
+  SGPosition p1c(0, 10);
+  
+  sg.addSequence(new SGSequence(0, 20, "seq1"));
+  sg.addJoin(new SGJoin(SGSide(p1a, false), SGSide(p1c, true)));
+  sg.addJoin(new SGJoin(SGSide(p1b, true), SGSide(p1c, false)));
+
+  vector<string> bases(1);
+  bases[0] = "ACCTGACCATAGGCATGGGC";
+
+  vector<Side2Seq::NamedPath> paths;
+
+  Side2Seq converter;
+  converter.init(&sg, &bases, &paths);
+  try
+  {
+    converter.convert();
+  }
+  catch(exception& e)
+  {
+    cerr << "Exception caught " << e.what() << endl;
+    CuAssertTrue(testCase, false);
+  }
+
+  const SideGraph* outGraph = converter.getOutGraph();
+  CuAssertTrue(testCase, outGraph->getNumSequences() == 4);
+  CuAssertTrue(testCase, outGraph->getSequence(0)->getLength() == 6);
+  CuAssertTrue(testCase, outGraph->getSequence(1)->getLength() == 4);
+  CuAssertTrue(testCase, outGraph->getSequence(2)->getLength() == 1);
+  CuAssertTrue(testCase, outGraph->getSequence(3)->getLength() == 9);
+}
+  
+
 CuSuite* side2SeqTestSuite(void) 
 {
   CuSuite* suite = CuSuiteNew();
   SUITE_ADD_TEST(suite, simpleTest);
   SUITE_ADD_TEST(suite, inversionTest);
+  SUITE_ADD_TEST(suite, doubleCutTest);
   return suite;
 }

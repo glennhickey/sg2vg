@@ -264,6 +264,24 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
   {
     outSides.insert((*j)->getSide2());
   }
+
+  // filter sides that would induce same cut (probably would have
+  // been smarter to deal with positions instead of sides here)
+  set<SGSide>::iterator cur = outSides.begin();
+  set<SGSide>::iterator next = outSides.end();
+  for (; cur != outSides.end(); cur = next)
+  {
+    next = cur;
+    ++next;
+    // next side is 1 position to the right of cur AND
+    // next side is on left of position (forward) and cur is on right (back)
+    if (next->getBase().getSeqID() == cur->getBase().getSeqID() &&
+        next->getBase().getPos() == cur->getBase().getPos() + 1 &&
+        next->getForward() == true && cur->getForward() == false)
+    {
+      outSides.erase(cur);
+    }
+  }
   
   return outSides.size();
 }
