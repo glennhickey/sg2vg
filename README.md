@@ -3,6 +3,10 @@ Prototype code for converting [Global Alliance (Side Graph) Server](https://gith
 
 (c) 2015 Glenn Hickey. See [LICENSE](https://github.com/glennhickey/hal2sg/blob/development/LICENSE) for details.
 
+See also:
+* [vg2sg](https://github.com/glennhickey/vg2sg): Convert  [VG](https://github.com/ekg/vg) to  [Side Graph SQL](https://github.com/ga4gh/schemas/wiki/Human-Genome-Variation-Reference-(HGVR)-Pilot-Project#graph-format)
+* [hal2sg](https://github.com/glennhickey/hal2sg): Convert  [HAL](https://github.com/glennhickey/hal) (output by [Cactus](https://github.com/glennhickey/progressiveCactus) and[CAMEL](https://github.com/adamnovak/sequence-graphs)) to [Side Graph SQL](https://github.com/ga4gh/schemas/wiki/Human-Genome-Variation-Reference-(HGVR)-Pilot-Project#graph-format)
+
 # Remaining Development 
 
 * Unit Tests
@@ -31,7 +35,7 @@ or
 
 To run the converter:
 
-	  ga2vg graph-url | vg view -J  | vg view -v > graph.vg
+	  sg2vg graph-url | vg view -J  | vg view -v > graph.vg
 
 `graph-url` URL of graph server with version attached at end
 

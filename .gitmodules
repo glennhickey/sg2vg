@@ -1,9 +1,6 @@
 [submodule "protobuf"]
 	path = protobuf
 	url = git@github.com:ekg/protobuf.git
-[submodule "server"]
-	path = server
-	url = git@github.com:ga4gh/server.git
 [submodule "sgExport"]
 	path = sgExport
 	url = git@github.com:glennhickey/sgExport.git

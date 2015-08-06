@@ -1,8 +1,8 @@
 rootPath = ..
 include ${rootPath}/include.mk
 
-ga2vgObjectsAll = $(wildcard ${rootPath}/*.o)
-ga2vgObjects=$(subst ../ga2vg.o,,${ga2vgObjectsAll})
+sg2vgObjectsAll = $(wildcard ${rootPath}/*.o)
+sg2vgObjects=$(subst ../sg2vg.o,,${sg2vgObjectsAll})
 
 all : unitTests
 
@@ -23,6 +23,6 @@ sgclientTests.o : sgclientTests.cpp ${rootPath}/*.h
 side2seqTests.o : side2seqTests.cpp ${rootPath}/*.h
 	${cpp} ${cppflags} -I ${sgExportPath}/tests -I${rootPath}/ side2seqTests.cpp -c
 
-unitTests : CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${sgExportPath}/sgExport.a ${ga2vgObjects} ${basicLibsDependencies}
-	${cpp} -I ${sgExportPath}/tests -I${rootPath}/ ${cppflags}  CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${ga2vgObjects} ${basicLibs} ${sgExportPath}/sgExport.a -o unitTests
+unitTests : CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${sgExportPath}/sgExport.a ${sg2vgObjects} ${basicLibsDependencies}
+	${cpp} -I ${sgExportPath}/tests -I${rootPath}/ ${cppflags}  CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${sg2vgObjects} ${basicLibs} ${sgExportPath}/sgExport.a -o unitTests
 
