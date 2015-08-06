@@ -18,9 +18,10 @@
 using namespace std;
 using namespace rapidjson;
 
+const int SGClient::DefaultPageSize = 1000;
 const string SGClient::CTHeader = "Content-Type: application/json";
 
-SGClient::SGClient() : _sg(0), _os(0)
+SGClient::SGClient() : _sg(0), _os(0), _pageSize(DefaultPageSize)
 {
 
 }
@@ -67,6 +68,11 @@ void SGClient::setOS(ostream* os)
   _os = os;
 }
 
+void SGClient::setPageSize(int pageSize)
+{
+  _pageSize = pageSize;
+}
+
 ostream& SGClient::os()
 {
   return _os != NULL ? *_os : _ignore;
@@ -77,18 +83,28 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 {
   map<int, string> refIDMap;
   os() << "Downloading References...";
-  downloadReferences(refIDMap);
+  for (int pageToken = 0; pageToken >= 0;)
+  {
+    pageToken = downloadReferences(refIDMap, pageToken, _pageSize);
+  }
   os() << " (" << refIDMap.size() << " references retrieved)" << endl;
   
   vector<const SGSequence*> seqs;
   outBases.clear();
   os() << "Downloading Sequences...";
-  downloadSequences(seqs, &outBases, &refIDMap);
+  for (int pageToken = 0; pageToken >= 0;)
+  {
+    pageToken = downloadSequences(seqs, &outBases, &refIDMap, pageToken,
+                                  _pageSize);
+  }
   os() << " (" << seqs.size() << " sequences retrieved)" << endl;
   
   vector<const SGJoin*> joins;
   os() << "Downloading Joins...";
-  downloadJoins(joins);
+  for (int pageToken = 0; pageToken >= 0;)
+  {
+    pageToken = downloadJoins(joins, pageToken, _pageSize);
+  }
   os() << " (" << joins.size() << " joins retrieved)" << endl;
 
   // keep downloading paths until there aren't any.
@@ -116,12 +132,11 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
                                 vector<string>* outBases,
                                 const map<int, string>* nameIdMap,
-                                int idx, int numSequences,
+                                int pageToken, int pageSize,
                                 int referenceSetID, int variantSetID)
-{
-  outSequences.clear();
-    
-  string postOptions = getSequencePostOptions(idx, numSequences, referenceSetID,
+{    
+  string postOptions = getSequencePostOptions(pageToken, pageSize,
+                                              referenceSetID,
                                               variantSetID, outBases != NULL);
 
   string path = "/sequences/search";
@@ -135,14 +150,24 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   JSON2SG parser;
   vector<SGSequence*> sequences;
   vector<string> bases;
-  int ret = parser.parseSequences(result, sequences,
-                                  outBases != NULL ? *outBases : bases);
-  if (ret == -1)
+  int nextPageToken = -2;
+  int ret = parser.parseSequences(result, sequences, bases, nextPageToken);
+  if (ret == -1 || nextPageToken <= -2)
   {
     stringstream ss;
     ss << "Error: POST request for Sequences returned " << result;
     throw runtime_error(ss.str());
   }
+  if (nextPageToken >= 0 && pageToken + sequences.size() != nextPageToken)
+  {
+    stringstream ss;
+    ss << "Error: nextPageToken=" << nextPageToken << " returned does not "
+       << "equal number of sequences returned (" << sequences.size()
+       << ") + pageToken=" << pageToken;
+    throw runtime_error(ss.str());
+  }
+  
+  assert(!outBases || bases.size() == sequences.size());
   
   for (int i = 0; i < sequences.size(); ++i)
   {
@@ -178,19 +203,21 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
     addSeqIDMapping(originalID, addedSeq->getID());
 
     outSequences.push_back(addedSeq);
+    if (outBases != NULL)
+    {
+      outBases->push_back(bases[i]);
+    }
   }
 
-  return outSequences.size();
+  return nextPageToken;
 }
 
 int SGClient::downloadReferences(map<int, string>& outIdMap,
-                                 int idx,
-                                 int numReferences,
+                                 int pageToken,
+                                 int pageSize,
                                  int referenceSetID)
-{
-  outIdMap.clear();
-    
-  string postOptions = getReferencePostOptions(idx, numReferences,
+{   
+  string postOptions = getReferencePostOptions(pageToken, pageSize,
                                                referenceSetID,
                                                vector<int>(),
                                                vector<string>(),
@@ -206,15 +233,27 @@ int SGClient::downloadReferences(map<int, string>& outIdMap,
 
   // Parse the JSON output into a Sequences array and add it to the side graph
   JSON2SG parser;
-  int ret = parser.parseReferences(result, outIdMap);
-  if (ret == -1)
+  map<int, string> idMap;
+  int nextPageToken = -2;
+  int ret = parser.parseReferences(result, idMap, nextPageToken);
+  if (ret == -1 || nextPageToken <= -2)
   {
     stringstream ss;
     ss << "Error: POST request for References returned " << result;
     throw runtime_error(ss.str());
   }
+  if (nextPageToken >= 0 && pageToken + idMap.size() != nextPageToken)
+  {
+    stringstream ss;
+    ss << "Error: nextPageToken=" << nextPageToken << " returned does not "
+       << "equal number of references returned (" << idMap.size()
+       << ") + pageToken=" << pageToken;
+    throw runtime_error(ss.str());
+  }
 
-  return outIdMap.size();
+  outIdMap.insert(idMap.begin(), idMap.end());
+
+  return nextPageToken;
 }
 
 int SGClient::downloadBases(sg_int_t sgSeqID, string& outBases, int start,
@@ -277,13 +316,11 @@ int SGClient::downloadBases(sg_int_t sgSeqID, string& outBases, int start,
 }
 
 int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
-                            int idx, int numJoins,
+                            int pageToken, int pageSize,
                             int referenceSetID, int variantSetID)
-{
-  outJoins.clear();
-  
-  string postOptions = getJoinPostOptions(idx, numJoins, referenceSetID,
-                                      variantSetID);
+{ 
+  string postOptions = getJoinPostOptions(pageToken, pageSize, referenceSetID,
+                                          variantSetID);
   string path = "/joins/search";
 
   // Send the Request
@@ -294,11 +331,20 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   // Parse the JSON output into a Joins array and add it to the side graph
   JSON2SG parser;
   vector<SGJoin*> joins;
-  int ret = parser.parseJoins(result, joins);
-  if (ret == -1)
+  int nextPageToken = -2;
+  int ret = parser.parseJoins(result, joins, nextPageToken);
+  if (ret == -1 || nextPageToken <= -2)
   {
     stringstream ss;
     ss << "Error: POST request for Joins returned " << result;
+    throw runtime_error(ss.str());
+  }
+  if (nextPageToken >= 0 && pageToken + joins.size() != nextPageToken)
+  {
+    stringstream ss;
+    ss << "Error: nextPageToken=" << nextPageToken << " returned does not "
+       << "equal number of joins returned (" << joins.size()
+       << ") + pageToken=" << pageToken;
     throw runtime_error(ss.str());
   }
   
@@ -308,7 +354,7 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
     outJoins.push_back(_sg->addJoin(joins[i]));
   }
 
-  return outJoins.size();
+  return nextPageToken;
 }
 
 int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
@@ -352,7 +398,10 @@ string SGClient::getSequencePostOptions(int pageToken,
   doc.AddMember("pageToken", nv, doc.GetAllocator());
   if (pageToken > 0)
   {
-    doc["pageToken"].SetInt64(pageToken);
+    stringstream ss;
+    ss << pageToken;
+    doc["pageToken"].SetString(ss.str().c_str(), ss.str().length(),
+                               doc.GetAllocator());
   }
   doc.AddMember("referenceSetId", nv, doc.GetAllocator());
   if (referenceSetID >= 0)
@@ -392,7 +441,10 @@ string SGClient::getReferencePostOptions(int pageToken,
   doc.AddMember("pageToken", nv, doc.GetAllocator());
   if (pageToken > 0)
   {
-    doc["pageToken"].SetInt64(pageToken);
+    stringstream ss;
+    ss << pageToken;
+    doc["pageToken"].SetString(ss.str().c_str(), ss.str().length(),
+                               doc.GetAllocator());
   }
   doc.AddMember("referenceSetId", nv, doc.GetAllocator());
   if (referenceSetID >= 0)
@@ -445,7 +497,10 @@ string SGClient::getJoinPostOptions(int pageToken,
   doc.AddMember("pageToken", nv, doc.GetAllocator());
   if (pageToken > 0)
   {
-    doc["pageToken"].SetInt64(pageToken);
+    stringstream ss;
+    ss << pageToken;
+    doc["pageToken"].SetString(ss.str().c_str(), ss.str().length(),
+                               doc.GetAllocator());
   }
   doc.AddMember("referenceSetId", nv, doc.GetAllocator());
   if (referenceSetID >= 0)

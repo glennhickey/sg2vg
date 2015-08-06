@@ -32,13 +32,15 @@ public:
    /** Parse sequences array.  Note, caller is responsible for freeing seqs.
     * returns number of sequences or -1 if (top level) error */
    int parseSequences(const char* buffer, std::vector<SGSequence*>& outSeqs,
-                      std::vector<std::string>& outBases);
+                      std::vector<std::string>& outBases,
+                      int& outNextPageToken);
 
    /** Parse single sequence. */
    SGSequence parseSequence(const rapidjson::Value& val);
 
    /** Parse references into id->name map */
-   int parseReferences(const char* buffer, std::map<int, std::string>& outMap);
+   int parseReferences(const char* buffer, std::map<int, std::string>& outMap,
+                       int& outNextPageToken);
 
    /** Parse squence bases. 
     * returns number of bases or -1 if error */
@@ -46,7 +48,8 @@ public:
 
    /** Parse joins array.  Note, caller is responsible for freeing joins.
     * returns number of joins or -1 if (top-level) error */
-   int parseJoins(const char* buffer, std::vector<SGJoin*>& outJoins);
+   int parseJoins(const char* buffer, std::vector<SGJoin*>& outJoins,
+                  int& outNextPageToken);
 
    /** Parse single join.  Note, caller responsible for freeing join */
    SGJoin* parseJoin(const rapidjson::Value& val);
@@ -74,6 +77,10 @@ public:
     * read string field into other type with error handling.  */
    template <typename T>
    T extractStringVal(const rapidjson::Value& val, const char* field);
+
+   /** get the nextPageToken.  It's stored as a string.  We convert it to
+    * int with following convetion: -1 = NULL, -2 = Error */
+   int getNextPageToken(const rapidjson::Value& val);
 
 protected:
    // hmm maybe i shouldnt be a class

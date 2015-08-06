@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cassert>
 #include <fstream>
+#include <cstdio>
 #include <getopt.h>
 
 #include "sgclient.h"
@@ -26,6 +27,8 @@ void help(char** argv)
        << "    URL:  Input GA4GH graph server URL to convert\n"
        << "options:\n"
        << "    -h, --help         \n"
+       << "    -p, --pageSize     Number of records per POST request "
+       << "(default=" << SGClient::DefaultPageSize << ").\n"
        << endl;
 }
 
@@ -37,6 +40,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  int pageSize = SGClient::DefaultPageSize;
   optind = 2;
   while (true)
   {
@@ -45,7 +49,7 @@ int main(int argc, char** argv)
          {"help", no_argument, 0, 'h'},
        };
     int option_index = 0;
-    int c = getopt_long(argc, argv, "h", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hp:", long_options, &option_index);
 
     if (c == -1)
     {
@@ -58,6 +62,9 @@ int main(int argc, char** argv)
     case '?':
       help(argv);
       exit(1);
+    case 'p':
+      pageSize = atoi(optarg);
+      break;
     default:
       abort();
     }
@@ -70,6 +77,7 @@ int main(int argc, char** argv)
   SGClient sgClient;
   sgClient.setURL(url);
   sgClient.setOS(&cerr);
+  sgClient.setPageSize(pageSize);
 
   // ith element is bases for sequence with id i in side graph
   vector<string> bases;

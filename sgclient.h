@@ -31,6 +31,8 @@ class SGClient
 {
 public:
 
+   static const int DefaultPageSize;
+   
    SGClient();
    ~SGClient();
 
@@ -43,6 +45,9 @@ public:
    /** print a few messages here if specified */
    void setOS(std::ostream* os);
 
+   /** set the Page Size for POST requests */
+   void setPageSize(int pageSize);
+
    typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
    /** Download a whole Side Graph into memory.  Topolgy gets stored 
     * internally in (returned) SideGraph, path and bases get stored in 
@@ -50,7 +55,7 @@ public:
    const SideGraph* downloadGraph(std::vector<std::string>& outBases,
                                   std::vector<NamedPath>& outPaths);
    
-   /** Download sequences into the Side Graph. returns number of sequences.
+   /** Download sequences into the Side Graph. returns Next Page Token.
     * call after downloadReferences.  In order to get sequence names,
     * pass nameIdMap as downloaded by downloadReferences().  outBases
     * is to support new interface to download bases with sequences.  it
@@ -58,16 +63,16 @@ public:
    int downloadSequences(std::vector<const SGSequence*>& outSequences,
                          std::vector<std::string>* outBases = NULL,
                          const std::map<int, std::string>* nameIdMap = NULL,
-                         int idx = 0,
-                         int numSequences = std::numeric_limits<int>::max(),
+                         int pageToken = 0,
+                         int pageSize = DefaultPageSize,
                          int referenceSetID = -1,
                          int variantSetID = -1);
 
    /** Download reference ids and build sequence id -> reference name map
-    * ignoring everything else */
+    * ignoring everything else.  returns Next Page Token. */
    int downloadReferences(std::map<int, std::string>& outIdMap,
-                          int idx = 0,
-                          int numReferences = std::numeric_limits<int>::max(),
+                          int pageToken = 0,
+                          int pageSize = DefaultPageSize,
                           int referenceSetID = -1);
 
    /** Download the DNA bases for a given sequence.  Note the ID here is
@@ -75,15 +80,14 @@ public:
    int downloadBases(sg_int_t sgSeqID, std::string& outBases, int start = 0,
                      int end = -1);
 
-   /** Download joins into the Side Graph. returns number of joins. Note
+   /** Download joins into the Side Graph. Returns Next Page Token. Note
     * must download Sequences first!!  Sequence ID's in joins are
     * automatically mapped to in-memory Side Graph ids.  */
    int downloadJoins(std::vector<const SGJoin*>& outJoins,
-                     int idx = 0,
-                     int numJoins = std::numeric_limits<int>::max(),
+                     int pageToken = 0,
+                     int pageSize = DefaultPageSize,
                      int referenceSetID = -1,
                      int variantSetID = -1);
-
    
    /** Download allele path.  returns -1 if path not found */
    int downloadAllele(int alleleID, std::vector<SGSegment>& outPath,
@@ -101,7 +105,6 @@ public:
    /** Add a mapping */
    void addSeqIDMapping(sg_int_t originalID, sg_int_t sgID);
    
-
    /** Get access to Side Graph that's been downloaded so far */
    const SideGraph* getSideGraph() const;
    
@@ -109,10 +112,10 @@ protected:
    
    /** Build the JSON string for sequence download options */
    std::string getSequencePostOptions(int pageToken,
-                                       int pageSize,
-                                       int referenceSetID,
-                                       int variantSetID,
-                                       bool getBases) const;
+                                      int pageSize,
+                                      int referenceSetID,
+                                      int variantSetID,
+                                      bool getBases) const;
 
    /** Build the JSON string for reference download options */
    std::string getReferencePostOptions(int pageToken,
@@ -126,8 +129,8 @@ protected:
 
    /** Build the JSON string for join download options */
    std::string getJoinPostOptions(int pageToken,
-                                      int pageSize,
-                                      int referenceSetID,
+                                  int pageSize,
+                                  int referenceSetID,
                                   int variantSetID) const;
             
    /** Print logging messages here */
@@ -144,6 +147,7 @@ protected:
    std::map<sg_int_t, sg_int_t> _fromOrigSeqId;
    std::ostream* _os;
    std::stringstream _ignore;
+   int _pageSize;
 };
 
 inline sg_int_t SGClient::getOriginalSeqID(sg_int_t sgID) const

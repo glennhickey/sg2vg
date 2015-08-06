@@ -28,12 +28,14 @@ JSON2SG::~JSON2SG()
 
 int JSON2SG::parseSequences(const char* buffer,
                             vector<SGSequence*>& outSeqs,
-                            vector<string>& outBases)
+                            vector<string>& outBases,
+                            int& outNextPageToken)
 {
   outSeqs.clear();
   outBases.clear();
   Document json;
   json.Parse(buffer);
+  outNextPageToken = getNextPageToken(json);
   if (!json.HasMember("sequences"))
   {
     return -1;
@@ -56,7 +58,6 @@ int JSON2SG::parseSequences(const char* buffer,
       outBases[i] = extractStringVal<string>(jsonSeqArray[i], "bases");
     }
   }
-
   return outSeqs.size();
 }
 
@@ -69,11 +70,13 @@ SGSequence JSON2SG::parseSequence(const Value& val)
 }
 
 int JSON2SG::parseReferences(const char* buffer,
-                            map<int, string>& outMap)
+                             map<int, string>& outMap,
+                             int& outNextPageToken)
 {
   outMap.clear();
   Document json;
   json.Parse(buffer);
+  outNextPageToken = getNextPageToken(json);
   if (!json.HasMember("references"))
   {
     return -1;
@@ -104,12 +107,14 @@ int JSON2SG::parseBases(const char* buffer, string& outBases)
   return outBases.size();
 }
 
-int JSON2SG::parseJoins(const char* buffer, vector<SGJoin*>& outJoins)
+int JSON2SG::parseJoins(const char* buffer, vector<SGJoin*>& outJoins,
+                        int& outNextPageToken)
 {
   outJoins.clear();
   // Read in the JSON string into Side Graph objects
   Document json;
   json.Parse(buffer);
+  outNextPageToken = getNextPageToken(json);
   if (!json.HasMember("joins"))
   {
     return -1;
@@ -196,4 +201,18 @@ SGSegment JSON2SG::parseSegment(const Value& val)
   SGSide sgSide = parseSide(val["start"]);
   int length = extractStringVal<int>(val, "length");
   return SGSegment(sgSide, length);
+}
+
+int JSON2SG::getNextPageToken(const Value& val)
+{
+  if (val.HasMember("nextPageToken"))
+  {
+    const Value& npt = val["nextPageToken"];
+    if (npt.IsNull())
+    {
+      return -1;
+    }
+    return extractStringVal<int>(val, "nextPageToken");
+  }
+  return -2;
 }
