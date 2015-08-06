@@ -94,7 +94,8 @@ int main(int argc, char** argv)
   SG2VGJSON jsonWriter;
   jsonWriter.init(&cout);
   jsonWriter.writeGraph(outGraph, outBases, outPaths);
-  
+
+  /*
   cerr << "INPUT " << endl;
   cerr << *sgClient.getSideGraph() << endl;
   cerr << "OUTPUT " << endl;
@@ -115,8 +116,8 @@ int main(int argc, char** argv)
       cerr << outPaths[i].second[j] << ", ";
     }
     cerr << endl;
-
   }
-
+  */
+  
   Download::cleanup();
 }

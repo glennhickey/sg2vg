@@ -185,8 +185,6 @@ void inversionTest(CuTest *testCase)
   const vector<string> outBases = converter.getOutBases();
   const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
 
-  cout << *outGraph << endl;
-
   // first sequence should be cut up into 4, and 2nd into 6
   CuAssertTrue(testCase, outGraph->getNumSequences() == 10);
   CuAssertTrue(testCase, outGraph->getSequence(0)->getLength() == 6);
