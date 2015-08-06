@@ -27,7 +27,7 @@ or
 
 To run the converter:
 
-	  sg2vg graph-url | vg view -J  | vg view -v > graph.vg
+	  sg2vg graph-url > graph.json && vg view -J  graph.json -v > graph.vg
 
 `graph-url` URL of graph server with version attached at end
 
