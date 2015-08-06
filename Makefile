@@ -4,7 +4,7 @@ include ${rootPath}/include.mk
 all : sg2vg
 
 clean : 
-	rm -f  sg2vg sg2vg.o sgclient.o download.o json2sg.o side2seq.o
+	rm -f  sg2vg sg2vg.o sgclient.o download.o json2sg.o side2seq.o sg2vgjson.o
 	cd sgExport && make clean
 	cd tests && make clean
 
