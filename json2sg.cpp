@@ -27,9 +27,11 @@ JSON2SG::~JSON2SG()
 }
 
 int JSON2SG::parseSequences(const char* buffer,
-                            std::vector<SGSequence*>& outSeqs)
+                            vector<SGSequence*>& outSeqs,
+                            vector<string>& outBases)
 {
   outSeqs.clear();
+  outBases.clear();
   Document json;
   json.Parse(buffer);
   if (!json.HasMember("sequences"))
@@ -38,12 +40,21 @@ int JSON2SG::parseSequences(const char* buffer,
   }
   const Value& jsonSeqArray = json["sequences"];
   outSeqs.resize(jsonSeqArray.Size());
+  outBases.resize(outSeqs.size());
 
   // rapidjson uses SizeType instead of size_t.
   for (SizeType i = 0; i < jsonSeqArray.Size(); i++)
   {
     SGSequence seq = parseSequence(jsonSeqArray[i]);
     outSeqs[i] = new SGSequence(seq.getID(), seq.getLength(), seq.getName());
+    if (!jsonSeqArray[i].HasMember("bases"))
+    {
+      throw std::runtime_error(std::string("Error parsing JSON field: bases"));
+    }
+    if (!jsonSeqArray[i]["bases"].IsNull())
+    {
+      outBases[i] = extractStringVal<string>(jsonSeqArray[i], "bases");
+    }
   }
 
   return outSeqs.size();

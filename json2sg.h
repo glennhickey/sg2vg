@@ -31,7 +31,8 @@ public:
 
    /** Parse sequences array.  Note, caller is responsible for freeing seqs.
     * returns number of sequences or -1 if (top level) error */
-   int parseSequences(const char* buffer, std::vector<SGSequence*>& outSeqs);
+   int parseSequences(const char* buffer, std::vector<SGSequence*>& outSeqs,
+                      std::vector<std::string>& outBases);
 
    /** Parse single sequence. */
    SGSequence parseSequence(const rapidjson::Value& val);
@@ -83,12 +84,14 @@ T JSON2SG::extractStringVal(const rapidjson::Value& val, const char* field)
 {
   if (!val.HasMember(field))
   {
-    throw std::runtime_error(std::string("Error parsing JSON field ") + field);
+    throw std::runtime_error(std::string(
+                               "Error parsing JSON field: ") + field);
   }
   const rapidjson::Value& v = val[field];
   if (!v.IsString())
   {
-    throw std::runtime_error(std::string("Error parsing JSON field ") + field);
+    throw std::runtime_error(std::string(
+                               "Error parsing JSON field: ") + field);
   }
   std::stringstream ss;
   ss << v.GetString();

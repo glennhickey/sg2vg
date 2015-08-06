@@ -81,27 +81,15 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
   os() << " (" << refIDMap.size() << " references retrieved)" << endl;
   
   vector<const SGSequence*> seqs;
+  outBases.clear();
   os() << "Downloading Sequences...";
-  downloadSequences(seqs, &refIDMap);
+  downloadSequences(seqs, &outBases, &refIDMap);
   os() << " (" << seqs.size() << " sequences retrieved)" << endl;
   
   vector<const SGJoin*> joins;
   os() << "Downloading Joins...";
   downloadJoins(joins);
   os() << " (" << joins.size() << " joins retrieved)" << endl;
-
-  // download bases for every side graph sequence
-  
-  os() << "Downloading bases for " << _sg->getNumSequences()
-       << " sequences... ";
-  int basesCount = 0;
-  outBases.resize(_sg->getNumSequences());
-  for (int i = 0; i < outBases.size(); ++i)
-  {
-    downloadBases(i, outBases[i]);
-    basesCount += outBases[i].length();
-  }
-  os() << " (" << basesCount << " bases retrieved)" << endl;
 
   // keep downloading paths until there aren't any.
   os() << "Downloading allele paths... ";
@@ -126,14 +114,15 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 }
 
 int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
+                                vector<string>* outBases,
                                 const map<int, string>* nameIdMap,
                                 int idx, int numSequences,
                                 int referenceSetID, int variantSetID)
 {
   outSequences.clear();
     
-  string postOptions = getPostOptions(idx, numSequences, referenceSetID,
-                                      variantSetID);
+  string postOptions = getSequencePostOptions(idx, numSequences, referenceSetID,
+                                              variantSetID, outBases != NULL);
 
   string path = "/sequences/search";
 
@@ -145,7 +134,9 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   // Parse the JSON output into a Sequences array and add it to the side graph
   JSON2SG parser;
   vector<SGSequence*> sequences;
-  int ret = parser.parseSequences(result, sequences);
+  vector<string> bases;
+  int ret = parser.parseSequences(result, sequences,
+                                  outBases != NULL ? *outBases : bases);
   if (ret == -1)
   {
     stringstream ss;
@@ -291,7 +282,7 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
 {
   outJoins.clear();
   
-  string postOptions = getPostOptions(idx, numJoins, referenceSetID,
+  string postOptions = getJoinPostOptions(idx, numJoins, referenceSetID,
                                       variantSetID);
   string path = "/joins/search";
 
@@ -345,10 +336,11 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
   return ret;
 }
 
-string SGClient::getPostOptions(int pageToken,
-                                int pageSize,
-                                int referenceSetID,
-                                int variantSetID) const
+string SGClient::getSequencePostOptions(int pageToken,
+                                        int pageSize,
+                                        int referenceSetID,
+                                        int variantSetID,
+                                        bool getBases) const
 {
    // Build JSON POST Options
   Document doc;
@@ -372,6 +364,9 @@ string SGClient::getPostOptions(int pageToken,
   {
     doc["variantSetId"].SetInt64(variantSetID);
   }
+  Value listBases;
+  listBases.SetBool(getBases);
+  doc.AddMember("listBases", listBases, doc.GetAllocator());
   
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
@@ -435,3 +430,36 @@ string SGClient::getReferencePostOptions(int pageToken,
   return buffer.GetString();
 }
   
+string SGClient::getJoinPostOptions(int pageToken,
+                                    int pageSize,
+                                    int referenceSetID,
+                                    int variantSetID) const
+{
+   // Build JSON POST Options
+  Document doc;
+  doc.Parse("{}");
+  Value nv;
+  assert(nv.IsNull());
+  doc.AddMember("pageSize", nv, doc.GetAllocator());
+  doc["pageSize"].SetInt64(pageSize);
+  doc.AddMember("pageToken", nv, doc.GetAllocator());
+  if (pageToken > 0)
+  {
+    doc["pageToken"].SetInt64(pageToken);
+  }
+  doc.AddMember("referenceSetId", nv, doc.GetAllocator());
+  if (referenceSetID >= 0)
+  {
+    doc["referenceSetId"].SetInt64(referenceSetID);
+  }
+  doc.AddMember("variantSetId", nv, doc.GetAllocator());
+  if (variantSetID >= 0)
+  {
+    doc["variantSetId"].SetInt64(variantSetID);
+  }
+ 
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}

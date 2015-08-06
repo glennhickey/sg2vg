@@ -52,9 +52,12 @@ public:
    
    /** Download sequences into the Side Graph. returns number of sequences.
     * call after downloadReferences.  In order to get sequence names,
-    * pass nameIdMap as downloaded by downloadReferences() */
+    * pass nameIdMap as downloaded by downloadReferences().  outBases
+    * is to support new interface to download bases with sequences.  it
+    * is optional. */
    int downloadSequences(std::vector<const SGSequence*>& outSequences,
-                         const std::map<int, std::string>* nameIdMap,
+                         std::vector<std::string>* outBases = NULL,
+                         const std::map<int, std::string>* nameIdMap = NULL,
                          int idx = 0,
                          int numSequences = std::numeric_limits<int>::max(),
                          int referenceSetID = -1,
@@ -104,13 +107,14 @@ public:
    
 protected:
    
-   /** Build the JSON string for some common options */
-   std::string getPostOptions(int pageToken,
-                              int pageSize,
-                              int referenceSetID,
-                              int variantSetID) const;
+   /** Build the JSON string for sequence download options */
+   std::string getSequencePostOptions(int pageToken,
+                                       int pageSize,
+                                       int referenceSetID,
+                                       int variantSetID,
+                                       bool getBases) const;
 
-   /** get references post takes some different options */
+   /** Build the JSON string for reference download options */
    std::string getReferencePostOptions(int pageToken,
                                        int pageSize,
                                        int referenceSetID,
@@ -119,6 +123,12 @@ protected:
                                        const std::vector<std::string>& accs,
                                        const std::vector<std::string>& rnames)
      const;
+
+   /** Build the JSON string for join download options */
+   std::string getJoinPostOptions(int pageToken,
+                                      int pageSize,
+                                      int referenceSetID,
+                                  int variantSetID) const;
             
    /** Print logging messages here */
    std::ostream& os();
