@@ -55,12 +55,11 @@ binPath=${rootPath}
 libPath=${rootPath}
 
 sgExportPath=${rootPath}/sgExport
-protobufPath=${rootPath}/protobuf
 rapidJsonPath=${rootPath}/rapidjson
 
 cflags +=  -I ${sgExportPath} ${platformCompileFlags}
-cppflags +=  -I ${sgExportPath} -I ${rapidJsonPath}/include -I ${protobufPath}/build/include ${platformCompileFlags}
-basicLibs = ${sgExportPath}/sgExport.a ${protobufPath}/libprotobuf.a -lz ${platformLinkFlags} -lcurl
-basicLibsDependencies = ${sgExportPath}/sgExport.a ${protobufPath}/libprotobuf.a
+cppflags +=  -I ${sgExportPath} -I ${rapidJsonPath}/include ${platformCompileFlags}
+basicLibs = ${sgExportPath}/sgExport.a -lz ${platformLinkFlags} -lcurl
+basicLibsDependencies = ${sgExportPath}/sgExport.a
 
 

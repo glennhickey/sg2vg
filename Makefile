@@ -7,24 +7,12 @@ clean :
 	rm -f  sg2vg sg2vg.o sgclient.o download.o json2sg.o side2seq.o
 	cd sgExport && make clean
 	cd tests && make clean
-	rm -f vg.pb.h vg.pb.cc vg.pb.o
 
 unitTests : sg2vg
 	cd tests && make
 
 ${sgExportPath}/sgExport.a : ${sgExportPath}/*.cpp ${sgExportPath}/*.h
 	cd ${sgExportPath} && make
-
-${protobufPath}/libprotobuf.a: ${protobufPath}/src/google/protobuf/*cc  ${protobufPath}/src/google/protobuf/*h
-	cd ${protobufPath} && mkdir -p build && ./autogen.sh && ./configure --prefix=`pwd`/build/ && make && make install
-	cp ${protobufPath}/build/lib/libprotobuf.a ${protobufPath}/
-
-vg.pb.cc: vg.pb.h
-vg.pb.h: vg.proto ${protobufPath}/libprotobuf.a
-	${protobufPath}/build/bin/protoc vg.proto --cpp_out=.
-
-vg.pb.o: vg.pb.h vg.pb.cc
-	${cpp} ${cppflags} -I . vg.pb.cc -c 
 
 sg2vg.o : sg2vg.cpp sgclient.h download.h side2seq.h json2sg.h sg2vgjson.h ${basicLibsDependencies}
 	${cpp} ${cppflags} -I . sg2vg.cpp -c
