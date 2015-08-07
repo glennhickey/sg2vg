@@ -100,20 +100,6 @@ void SG2VGJSON::addEdge(const SGJoin* join)
   addBool(edge, "from_start", join->getSide1().getBase().getPos() == 0);
   addBool(edge, "to_end", join->getSide2().getBase().getPos() != 0);
   edges().PushBack(edge, allocator());
-
-  // VG edges are directed.  Side GRaph edges are not.  so we add other dir
-  if (join->getSide1().getBase().getSeqID() !=
-      join->getSide2().getBase().getSeqID())
-  {
-    Value edge;
-    edge.SetObject();
-    // node id's are 1-based in VG! 
-    addInt(edge, "from", join->getSide2().getBase().getSeqID() + 1);
-    addInt(edge, "to", join->getSide1().getBase().getSeqID() + 1);
-    addBool(edge, "from_start", join->getSide2().getBase().getPos() == 0);
-    addBool(edge, "to_end", join->getSide1().getBase().getPos() != 0);
-    edges().PushBack(edge, allocator());
-  }
 }
 
 void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
