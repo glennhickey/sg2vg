@@ -97,8 +97,8 @@ void SG2VGJSON::addEdge(const SGJoin* join)
   // node id's are 1-based in VG! 
   addInt(edge, "from", join->getSide1().getBase().getSeqID() + 1);
   addInt(edge, "to", join->getSide2().getBase().getSeqID() + 1);
-  addBool(edge, "from_start", join->getSide1().getBase().getPos() == 0);
-  addBool(edge, "to_end", join->getSide2().getBase().getPos() != 0);
+  addBool(edge, "from_start", join->getSide1().getForward() == true);
+  addBool(edge, "to_end", join->getSide2().getForward() == false);
   edges().PushBack(edge, allocator());
 }
 
