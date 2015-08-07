@@ -251,7 +251,12 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
 
   // joins indexed on side1;
   const SideGraph::JoinSet* joinSet1 = _inGraph->getJoinSet();
-  SGJoin qj1(start, start);
+
+  // because of the way lower_bound works on joins, we want to make
+  // absolutely sure we include start <= i <= end range. to do this
+  // we make a minimal valid side:
+  SGSide minSide(SGPosition(0, 0), true);
+  SGJoin qj1(start, minSide);
   SideGraph::JoinSet::const_iterator i = joinSet1->lower_bound(&qj1);
   for (; i != joinSet1->end() && (*i)->getSide1() <= end; ++i)
   {
@@ -259,7 +264,8 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
   }
 
   // joins indexed on side2;
-  JoinSet2::const_iterator j = _joinSet2.lower_bound(&qj1);
+  SGJoin qj2(minSide, start);
+  JoinSet2::const_iterator j = _joinSet2.lower_bound(&qj2);
   for (; j != _joinSet2.end() && (*j)->getSide2() <= end; ++j)
   {
     outSides.insert((*j)->getSide2());

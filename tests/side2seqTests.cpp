@@ -284,7 +284,71 @@ void doubleCutTest(CuTest *testCase)
   CuAssertTrue(testCase, outGraph->getSequence(2)->getLength() == 1);
   CuAssertTrue(testCase, outGraph->getSequence(3)->getLength() == 9);
 }
+
+///////////////////////////////////////////////////////////
+//  rev2bSnpJoin test
+// case that first came up in lrc_kir where sanity check
+// fails on a seemingly straightforward 2base reverse snp
+// 
+///////////////////////////////////////////////////////////
+void rev2bSnpJoinTest(CuTest *testCase)
+{
+  CuAssertTrue(testCase, true);
+
+  SideGraph sg;
+    
+  SGPosition p1a(0, 5);
+  SGPosition p2a(1, 0);
   
+  sg.addSequence(new SGSequence(0, 20, "seq1"));
+  sg.addSequence(new SGSequence(1, 2, "seq2"));
+  sg.addJoin(new SGJoin(SGSide(p1a, true), SGSide(p2a, false)));
+
+  vector<string> bases(2);
+  bases[0] = "ACCTGACCATAGGCATGGGC";
+  bases[1] = "TA";
+
+  vector<Side2Seq::NamedPath> paths;
+
+  Side2Seq converter;
+  converter.init(&sg, &bases, &paths);
+  try
+  {
+    converter.convert();
+  }
+  catch(exception& e)
+  {
+    cerr << "Exception caught " << e.what() << endl;
+    CuAssertTrue(testCase, false);
+  }
+
+  const SideGraph* outGraph = converter.getOutGraph();
+
+  CuAssertTrue(testCase, outGraph->getNumSequences() == 4);
+  CuAssertTrue(testCase, outGraph->getSequence(0)->getLength() == 5);
+  CuAssertTrue(testCase, outGraph->getSequence(1)->getLength() == 15);
+  CuAssertTrue(testCase, outGraph->getSequence(2)->getLength() == 1);
+  CuAssertTrue(testCase, outGraph->getSequence(3)->getLength() == 1);
+
+  // original join
+  SGJoin j1(SGSide(SGPosition(1, 0), true),
+            SGSide(SGPosition(2, 0), false));
+  CuAssertTrue(testCase, outGraph->getJoin(&j1) != NULL);
+
+  // 1 new join added by fragmentation of sequence 0
+  SGJoin j2(SGSide(SGPosition(0, 4), false),
+            SGSide(SGPosition(1, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j2) != NULL);
+
+  // 1 new join added by fragmentation of sequence 1
+  SGJoin j3(SGSide(SGPosition(2, 0), false),
+            SGSide(SGPosition(3, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j3) != NULL);
+  
+  CuAssertTrue(testCase, outGraph->getJoinSet()->size() == 3);
+
+}
+
 
 CuSuite* side2SeqTestSuite(void) 
 {
@@ -292,5 +356,6 @@ CuSuite* side2SeqTestSuite(void)
   SUITE_ADD_TEST(suite, simpleTest);
   SUITE_ADD_TEST(suite, inversionTest);
   SUITE_ADD_TEST(suite, doubleCutTest);
+  SUITE_ADD_TEST(suite, rev2bSnpJoinTest);  
   return suite;
 }
