@@ -85,7 +85,8 @@ void SG2VGJSON::addNode(const SGSequence* seq)
   node.SetObject();
   addString(node, "sequence", _bases->at(seq->getID()));
   addString(node, "name", seq->getName());
-  addInt(node, "id", seq->getID());
+  // node id's are 1-based in VG! 
+  addInt(node, "id", seq->getID() + 1);
   nodes().PushBack(node, allocator());
 }
 
@@ -93,8 +94,9 @@ void SG2VGJSON::addEdge(const SGJoin* join)
 {
   Value edge;
   edge.SetObject();
-  addInt(edge, "from", join->getSide1().getBase().getSeqID());
-  addInt(edge, "to", join->getSide2().getBase().getSeqID());
+  // node id's are 1-based in VG! 
+  addInt(edge, "from", join->getSide1().getBase().getSeqID() + 1);
+  addInt(edge, "to", join->getSide2().getBase().getSeqID() + 1);
   addBool(edge, "from_start", join->getSide1().getBase().getPos() == 0);
   addBool(edge, "to_end", join->getSide2().getBase().getPos() != 0);
   edges().PushBack(edge, allocator());
@@ -105,8 +107,9 @@ void SG2VGJSON::addEdge(const SGJoin* join)
   {
     Value edge;
     edge.SetObject();
-    addInt(edge, "from", join->getSide2().getBase().getSeqID());
-    addInt(edge, "to", join->getSide1().getBase().getSeqID());
+    // node id's are 1-based in VG! 
+    addInt(edge, "from", join->getSide2().getBase().getSeqID() + 1);
+    addInt(edge, "to", join->getSide1().getBase().getSeqID() + 1);
     addBool(edge, "from_start", join->getSide2().getBase().getPos() == 0);
     addBool(edge, "to_end", join->getSide1().getBase().getPos() != 0);
     edges().PushBack(edge, allocator());
@@ -124,7 +127,8 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
   {
     Value position;
     position.SetObject();
-    addInt(position, "node_id", path[i].getSide().getBase().getSeqID());
+    // node id's are 1-based in VG! 
+    addInt(position, "node_id", path[i].getSide().getBase().getSeqID() + 1);
     addInt(position, "offset", 0);
     
     Value mapping;
