@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <curl/curl.h>
+#include <cstring>
 
 #include "download.h"
 
