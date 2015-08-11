@@ -1,6 +1,6 @@
 [submodule "sgExport"]
 	path = sgExport
-	url = git@github.com:glennhickey/sgExport.git
+	url = https://github.com/glennhickey/sgExport.git
 [submodule "rapidjson"]
 	path = rapidjson
-	url = git@github.com:miloyip/rapidjson.git
+	url = https://github.com/miloyip/rapidjson.git
