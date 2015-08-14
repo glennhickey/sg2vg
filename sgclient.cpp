@@ -88,14 +88,19 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
     pageToken = downloadReferences(refIDMap, pageToken, _pageSize);
   }
   os() << " (" << refIDMap.size() << " references retrieved)" << endl;
+  if (refIDMap.size() == 0)
+  {
+    os() << "Warning: No references found" << endl;
+  }
   
   vector<const SGSequence*> seqs;
   outBases.clear();
   os() << "Downloading Sequences...";
   for (int pageToken = 0; pageToken >= 0;)
   {
-    pageToken = downloadSequences(seqs, &outBases, &refIDMap, pageToken,
-                                  _pageSize);
+    pageToken = downloadSequences(seqs, &outBases,
+                                  refIDMap.empty() ? NULL : &refIDMap,
+                                  pageToken, _pageSize);
   }
   os() << " (" << seqs.size() << " sequences retrieved)" << endl;
   
@@ -189,7 +194,7 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
       if (si == nameIdMap->end())
       {
         stringstream ss;
-        ss << "Error: Could not find Reference with for sequence id "
+        ss << "Error: Could not find Reference for sequence id "
            << sequences[i]->getID();
         throw runtime_error(ss.str());
       }
