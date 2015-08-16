@@ -98,7 +98,7 @@ public:
     * to enforce this.  We therefore keep a little map to get back the
     * ID from the graph server sequence, given a side graph sequence */
    sg_int_t getOriginalSeqID(sg_int_t sgID) const;
-   /** Other direction */
+   /** Other direction (returns -1 if not found) */
    sg_int_t getSGSeqID(sg_int_t sgID) const;
    /** Apply mapping (original->sg) to join */
    void mapSeqIDsInJoin(SGJoin& join) const;
@@ -109,6 +109,9 @@ public:
    const SideGraph* getSideGraph() const;
    
 protected:
+
+   /** Make sure input join connects to positions that exist */
+   void verifyInJoin(const SGJoin& joine) const;
    
    /** Build the JSON string for sequence download options */
    std::string getSequencePostOptions(int pageToken,
@@ -158,8 +161,12 @@ inline sg_int_t SGClient::getOriginalSeqID(sg_int_t sgID) const
 
 inline sg_int_t SGClient::getSGSeqID(sg_int_t origID) const
 {
-  assert(_fromOrigSeqId.find(origID) != _fromOrigSeqId.end());
-  return _fromOrigSeqId.find(origID)->second;
+  std::map<sg_int_t, sg_int_t>::const_iterator i =_fromOrigSeqId.find(origID);
+  if (i == _fromOrigSeqId.end())
+  {
+    return -1;
+  }
+  return i->second;
 }
 
 inline void SGClient::mapSeqIDsInJoin(SGJoin& join) const

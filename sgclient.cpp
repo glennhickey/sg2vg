@@ -355,6 +355,7 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   
   for (int i = 0; i < joins.size(); ++i)
   {
+    verifyInJoin(*joins[i]);
     mapSeqIDsInJoin(*joins[i]);
     outJoins.push_back(_sg->addJoin(joins[i]));
   }
@@ -385,6 +386,46 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
   }
 
   return ret;
+}
+
+void SGClient::verifyInJoin(const SGJoin& join) const
+{
+  const SGPosition& pos1 = join.getSide1().getBase();
+  const SGPosition& pos2 = join.getSide2().getBase();
+  sg_int_t sgid1 = getSGSeqID(pos1.getSeqID());
+  sg_int_t sgid2 = getSGSeqID(pos2.getSeqID());
+
+  if (sgid1 < 0 || sgid2 < 0)
+  {
+    stringstream ss;
+    ss << "Invalid input join: " << join << ". Sequence ID "
+       << (sgid1 < 0 ? pos1.getSeqID() : pos2.getSeqID()) 
+       << " not found in input graph";
+    throw runtime_error(ss.str());
+  }
+
+  const SGSequence* seq1 = _sg->getSequence(sgid1);
+  const SGSequence* seq2 = _sg->getSequence(sgid2);
+
+  if (pos1.getPos() < 0 || pos1.getPos() >= seq1->getLength())
+  {
+    stringstream ss;
+    ss << "Invalid input join: " << join << ". Position of Side 1"
+       << " (" << pos1.getPos() << ") "
+       << "not within Sequence with ID=" << pos1.getSeqID()
+       << " which has length=" << seq1->getLength();
+    throw runtime_error(ss.str());
+  }
+
+  if (pos2.getPos() < 0 || pos2.getPos() >= seq2->getLength())
+  {
+    stringstream ss;
+    ss << "Invalid input join: " << join << ". Position of Side 2"
+       << " (" << pos2.getPos() << ") "
+       << "not within Sequence with ID=" << pos2.getSeqID()
+       << " which has length=" << seq2->getLength();
+    throw runtime_error(ss.str());
+  }
 }
 
 string SGClient::getSequencePostOptions(int pageToken,
