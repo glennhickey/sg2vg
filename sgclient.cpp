@@ -178,27 +178,31 @@ int SGClient::downloadSequences(vector<const SGSequence*>& outSequences,
   {
     sg_int_t originalID = sequences[i]->getID();
 
-    // no name in the json.  no references loaded.  so we give it a name
+    bool foundName = false;
+    if (nameIdMap != NULL)
+    {
+      map<int, string>::const_iterator si = nameIdMap->find(
+        sequences[i]->getID());
+      if (si != nameIdMap->end())
+      {
+        // name mapped from reference name
+        sequences[i]->setName(si->second);
+        foundName = true;
+      }
+      else
+      {
+        os() << "\nWarning: Could not find Reference for sequence id "
+             << sequences[i]->getID() << " ";
+      }
+    }
+
+    // no name in the json.  no reference found / loaded.  so we give it a name
     // based on original id
-    if (nameIdMap == NULL)
+    if (foundName == false)
     {
       stringstream ss;
       ss << "Seq" << originalID;
       sequences[i]->setName(ss.str());
-    }
-    // name mapped from reference name
-    else
-    {
-      map<int, string>::const_iterator si = nameIdMap->find(
-        sequences[i]->getID());
-      if (si == nameIdMap->end())
-      {
-        stringstream ss;
-        ss << "Error: Could not find Reference for sequence id "
-           << sequences[i]->getID();
-        throw runtime_error(ss.str());
-      }
-      sequences[i]->setName(si->second);
     }
     
     // store map to original id as Side Graph interface requires
