@@ -29,6 +29,7 @@ void help(char** argv)
        << "    -h, --help         \n"
        << "    -p, --pageSize     Number of records per POST request "
        << "(default=" << SGClient::DefaultPageSize << ").\n"
+       << "    -u, --upper        Write all sequences in upper case.\n"
        << endl;
 }
 
@@ -41,15 +42,18 @@ int main(int argc, char** argv)
   }
 
   int pageSize = SGClient::DefaultPageSize;
+  bool upperCase = false;
   optind = 2;
   while (true)
   {
     static struct option long_options[] =
        {
          {"help", no_argument, 0, 'h'},
+         {"page", required_argument, 0, 'p'},
+         {"upper", no_argument, 0, 'u'}
        };
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hp:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hp:u", long_options, &option_index);
 
     if (c == -1)
     {
@@ -64,6 +68,9 @@ int main(int argc, char** argv)
       exit(1);
     case 'p':
       pageSize = atoi(optarg);
+      break;
+    case 'u':
+      upperCase = true;
       break;
     default:
       abort();
@@ -90,7 +97,7 @@ int main(int argc, char** argv)
   // convert side graph into sequence graph (which is stored
   cerr << "Converting Side Graph to VG Sequence Graph" << endl;
   Side2Seq converter;
-  converter.init(sg, &bases, &paths);
+  converter.init(sg, &bases, &paths, upperCase);
   converter.convert();
 
   const SideGraph* outGraph = converter.getOutGraph();

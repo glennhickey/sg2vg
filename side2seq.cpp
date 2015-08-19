@@ -14,7 +14,7 @@ using namespace std;
 
 
 Side2Seq::Side2Seq() : _inGraph(NULL), _inBases(NULL), _inPaths(NULL),
-                       _outGraph(NULL)
+                       _outGraph(NULL), _forceUpper(false)
 {
   
 }
@@ -30,6 +30,7 @@ void Side2Seq::reset()
   _inBases = NULL;
   _inPaths = NULL;
   delete _outGraph;
+  _forceUpper = false;
   _outBases.clear();
   _outPaths.clear();
   _joinSet2.clear();
@@ -37,7 +38,8 @@ void Side2Seq::reset()
 
 void Side2Seq::init(const SideGraph* sg,
                     const vector<string>* bases,
-                    const vector<NamedPath>* paths)
+                    const vector<NamedPath>* paths,
+                    bool forceUpperCase)
 {
   reset();
   _inGraph = sg;
@@ -45,6 +47,8 @@ void Side2Seq::init(const SideGraph* sg,
   _inPaths = paths;
 
   _outGraph = new SideGraph();
+
+  _forceUpper = forceUpperCase;
 
   // re-index joins based on side2
   const SideGraph::JoinSet* js = _inGraph->getJoinSet();

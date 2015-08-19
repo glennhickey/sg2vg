@@ -13,6 +13,9 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
 
 #include "sidegraph.h"
 #include "sglookup.h"
@@ -43,7 +46,8 @@ public:
     * copy anything*/
    void init(const SideGraph* sg,
              const std::vector<std::string>* bases,
-             const std::vector<NamedPath>* paths);
+             const std::vector<NamedPath>* paths,
+             bool forceUpperCase = false);
 
    /** Convert the graph into a new sidegraph, bases, and paths */
    void convert();
@@ -101,6 +105,7 @@ protected:
    SideGraph* _outGraph;
    std::vector<std::string> _outBases;
    std::vector<NamedPath> _outPaths;
+   bool _forceUpper;
 
    // map Side Graph to Sequence Graph coords. 
    SGLookup _luTo;
@@ -136,6 +141,10 @@ inline void Side2Seq::getInDNA(const SGSegment& seg,
   if (!seg.getSide().getForward())
   {
     reverseComplement(outDNA);
+  }
+  if (_forceUpper)
+  {
+    std::transform(outDNA.begin(), outDNA.end(), outDNA.begin(), ::toupper);
   }
 }
 
