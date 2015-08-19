@@ -112,6 +112,9 @@ protected:
 
    /** Make sure input join connects to positions that exist */
    void verifyInJoin(const SGJoin& joine) const;
+
+   /** Make sure input segment spans range that exists */
+   void verifyInPath(int alleleID, const std::vector<SGSegment>& path) const;
    
    /** Build the JSON string for sequence download options */
    std::string getSequencePostOptions(int pageToken,

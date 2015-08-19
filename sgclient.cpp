@@ -385,6 +385,8 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
     throw runtime_error("AlleleID mismatch");
   }
 
+  verifyInPath(alleleID, outPath);
+
   return ret;
 }
 
@@ -425,6 +427,38 @@ void SGClient::verifyInJoin(const SGJoin& join) const
        << "not within Sequence with ID=" << pos2.getSeqID()
        << " which has length=" << seq2->getLength();
     throw runtime_error(ss.str());
+  }
+}
+
+void SGClient::verifyInPath(int alleleID, const vector<SGSegment>& path) const
+{
+  for (int i = 0; i < path.size(); ++i)
+  {
+    const SGSegment& seg = path[i];
+    const SGPosition& pos = seg.getSide().getBase();
+    sg_int_t sgid = getSGSeqID(pos.getSeqID());
+    if (sgid < 0)
+    {
+      stringstream ss;
+      ss << "Segment " << i << " of allele path " << alleleID
+         << " has unknown sequence ID " << pos.getSeqID();
+      throw runtime_error(ss.str());
+    }
+    
+    const SGSequence* seq = _sg->getSequence(sgid);
+
+    if (seg.getMinPos().getPos() < 0 ||
+        seg.getMaxPos().getPos() >= seq->getLength())
+    {
+      stringstream ss;
+      ss << "Segment " << i << " of allele path " << alleleID
+         << " runs from " << seg.getInSide().getBase().getPos() << " to "
+         << seg.getOutSide().getBase().getPos() << ", inclusive."
+         << " This range is invalid as it spans bases not in "
+         << "sequence with ID=" << pos.getSeqID() << " and length="
+         << seq->getLength();
+      throw runtime_error(ss.str());      
+    }
   }
 }
 
