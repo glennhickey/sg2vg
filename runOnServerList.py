@@ -115,7 +115,7 @@ def main(args):
     if options.serverList.startswith("http://"):
         serverFile = urllib2.urlopen(options.serverList)
     else:
-        serverFile = open(options.url)
+        serverFile = open(options.serverList)
     serverLines = [line for line in serverFile][1:]
     serverFile.close()
 
