@@ -100,7 +100,7 @@ def mungeError(errorString):
     """
     p = errorString.find("runtime_error:")
     if p >= 0:
-        return errorString[len("runtime_error:"):]
+        return errorString[p + len("runtime_error:"):]
     else:
         return "Error not parsed -- see log\n" 
 
