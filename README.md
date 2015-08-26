@@ -17,8 +17,6 @@ Download entire graph from server into memory.  Cut sequences so that all joins 
 
 **Cloning:** Don't forget to clone submodules:
 
-     git clone git@github.com:glennhickey/sg2vg.git --recursive
-or
      git clone https://github.com/glennhickey/sg2vg.git --recursive
 
 **Note** Start by verifying that the unit tests all pass:
