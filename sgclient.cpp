@@ -439,7 +439,6 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
   }
 
   verifyInPath(alleleID, outPath);
-  mapSeqIDsInPath(outPath);
 
   return ret;
 }
