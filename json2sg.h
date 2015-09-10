@@ -60,6 +60,10 @@ public:
    /** Parse Position */
    SGPosition parsePosition(const rapidjson::Value& val);
 
+   /** Parse out Allele IDs out of alleles array */
+   int parseAlleleIDs(const char* buffer, std::vector<int>& outAlleleIDs,
+                      int& outNextPageToken);
+
    /** Parse Allele.
     * returns number of segments in path or -1 if error */
    int parseAllele(const char* buffer, int& outID,

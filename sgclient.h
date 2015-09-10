@@ -88,6 +88,15 @@ public:
                      int pageSize = DefaultPageSize,
                      int referenceSetID = -1,
                      int variantSetID = -1);
+
+   /** Download alleles (only saving named paths for now) */
+   int downloadAllelePaths(std::vector<NamedPath>& outPaths,
+                           int pageToken = 0,
+                           int pageSize = DefaultPageSize,
+                           int sequenceID = -1,
+                           const std::vector<int>* variantSetIDs = NULL,
+                           int start = 0,
+                           int end = std::numeric_limits<int>::max());
    
    /** Download allele path.  returns -1 if path not found */
    int downloadAllele(int alleleID, std::vector<SGSegment>& outPath,
@@ -138,6 +147,14 @@ protected:
                                   int pageSize,
                                   int referenceSetID,
                                   int variantSetID) const;
+
+   /** Build the JSON string for allele download options */
+   std::string getAllelePostOptions(int pageToken,
+                                    int pageSize,
+                                    int sequenceID,
+                                    const std::vector<int>* variantSetIDs,
+                                    int start,
+                                    int end) const;
             
    /** Print logging messages here */
    std::ostream& os();

@@ -112,22 +112,12 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
   }
   os() << " (" << joins.size() << " joins retrieved)" << endl;
 
-  // keep downloading paths until there aren't any.
-  os() << "Downloading allele paths... ";
+
   outPaths.clear();
-  NamedPath path;
-  int variantSetID;
-  int ret = 1; 
-  for (int i = 0; ret > 0; ++i)
+  os() << "Downloading allele paths... ";
+  for (int pageToken = 0; pageToken >= 0;)
   {
-    path.first.clear();
-    path.second.clear();
-    ret = downloadAllele(i, path.second, variantSetID, path.first);
-    if (ret > 0)
-    {
-      outPaths.push_back(NamedPath());
-      swap(outPaths.back(), path);
-    }
+    pageToken = downloadAllelePaths(outPaths, pageToken, _pageSize);
   }
   os() << "(" << outPaths.size() << " paths retrieved)" << endl;
   
@@ -367,6 +357,58 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   return nextPageToken;
 }
 
+int SGClient::downloadAllelePaths(vector<NamedPath>& outPaths,
+                                  int pageToken, int pageSize,
+                                  int sequenceID,
+                                  const vector<int>* variantSetIDs,
+                                  int start, int end)
+{
+  string postOptions = getAllelePostOptions(pageToken, pageSize, sequenceID,
+                                            variantSetIDs, start, end);
+  string path = "/alleles/search";
+
+  // Send the Request
+  const char* result = _download.postRequest(_url + path,
+                                             vector<string>(1, CTHeader),
+                                             postOptions);
+
+  // POST Request doesn't return paths for some reason.  So we scrape out
+  // all the allele ID's from the result:
+  JSON2SG parser;
+  vector<int> alleleIDs;
+  int nextPageToken = -2;
+  int ret = parser.parseAlleleIDs(result, alleleIDs, nextPageToken);
+  if (ret == -1 || nextPageToken <= -2)
+  {
+    stringstream ss;
+    ss << "Error: POST request for Alleles returned " << result;
+    throw runtime_error(ss.str());
+  }
+  if (nextPageToken >= 0 && pageToken + alleleIDs.size() != nextPageToken)
+  {
+    stringstream ss;
+    ss << "Error: nextPageToken=" << nextPageToken << " returned does not "
+       << "equal number of alleles returned (" << alleleIDs.size()
+       << ") + pageToken=" << pageToken;
+    throw runtime_error(ss.str());
+  }
+
+  // With IDs in hand, we call downloadAllele on each one to get the path.
+  NamedPath allelePath;
+  int alleleVariantSetID;
+  for (int i = 0; i < alleleIDs.size(); ++i)
+  {
+    allelePath.first.clear();
+    allelePath.second.clear();
+    ret = downloadAllele(alleleIDs[i], allelePath.second, alleleVariantSetID,
+                         allelePath.first);
+    outPaths.push_back(NamedPath());
+    swap(outPaths.back(), allelePath);
+  }
+
+  return nextPageToken;
+}
+
 int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
                              int& outVariantSetID, string& outName)
 {
@@ -472,7 +514,7 @@ string SGClient::getSequencePostOptions(int pageToken,
                                         int variantSetID,
                                         bool getBases) const
 {
-   // Build JSON POST Options
+  // Build JSON POST Options
   Document doc;
   doc.Parse("{}");
   Value nv;
@@ -565,13 +607,13 @@ string SGClient::getReferencePostOptions(int pageToken,
   doc.Accept(writer);
   return buffer.GetString();
 }
-  
+
 string SGClient::getJoinPostOptions(int pageToken,
                                     int pageSize,
                                     int referenceSetID,
                                     int variantSetID) const
 {
-   // Build JSON POST Options
+  // Build JSON POST Options
   Document doc;
   doc.Parse("{}");
   Value nv;
@@ -596,6 +638,67 @@ string SGClient::getJoinPostOptions(int pageToken,
   {
     doc["variantSetId"].SetInt64(variantSetID);
   }
+ 
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
+
+string SGClient::getAllelePostOptions(int pageToken,
+                                      int pageSize,
+                                      int sequenceID,
+                                      const vector<int>* variantSetIDs,
+                                      int start,
+                                      int end) const
+{
+  // Build JSON POST Options
+  Document doc;
+  doc.Parse("{}");
+  Value nv;
+  assert(nv.IsNull());
+  doc.AddMember("pageSize", nv, doc.GetAllocator());
+  doc["pageSize"].SetInt64(pageSize);
+  doc.AddMember("pageToken", nv, doc.GetAllocator());
+  if (pageToken > 0)
+  {
+    stringstream ss;
+    ss << pageToken;
+    doc["pageToken"].SetString(ss.str().c_str(), ss.str().length(),
+                               doc.GetAllocator());
+  }
+
+  // default to empty string (if -1) unlike pagetoken which defaults to null.
+  Value jsonSequenceID;
+  string sequenceIDString;
+  if (sequenceID >= 0)
+  {
+    stringstream ss;
+    ss << sequenceID;
+    sequenceIDString = ss.str();
+  }
+  jsonSequenceID.SetString(sequenceIDString.c_str(), sequenceIDString.length(),
+                           doc.GetAllocator());
+  doc.AddMember("sequenceId", jsonSequenceID, doc.GetAllocator());
+
+  Value jsonVariantSetIDs;
+  jsonVariantSetIDs.SetArray();
+  doc.AddMember("variantSetIds", jsonVariantSetIDs, doc.GetAllocator());
+  if (variantSetIDs != NULL)
+  {
+    for (int i = 0; i < variantSetIDs->size(); ++i)
+    {
+      Value id;
+      id.SetInt64(variantSetIDs->at(i));
+      jsonVariantSetIDs.PushBack(id, doc.GetAllocator());
+    }
+  }
+  
+  doc.AddMember("start", nv, doc.GetAllocator());
+  doc["start"].SetInt64(start);
+
+  doc.AddMember("end", nv, doc.GetAllocator());
+  doc["end"].SetInt64(end);
  
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);

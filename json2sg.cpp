@@ -150,6 +150,30 @@ SGPosition JSON2SG::parsePosition(const Value& val)
   return SGPosition(seqid, pos);
 }
 
+/** Parse out Allele IDs out of alleles array */
+int JSON2SG::parseAlleleIDs(const char* buffer, vector<int>& outAlleleIDs,
+                            int& outNextPageToken)
+{
+  outAlleleIDs.clear();
+  // Read in the JSON string into Side Graph objects
+  Document json;
+  json.Parse(buffer);
+  outNextPageToken = getNextPageToken(json);
+  if (!json.HasMember("alleles"))
+  {
+    return -1;
+  }
+  const Value& jsonAlleleArray = json["alleles"];
+  
+  // rapidjson uses SizeType instead of size_t.
+  for (SizeType i = 0; i < jsonAlleleArray.Size(); i++)
+  {
+    int id = extractStringVal<int>(jsonAlleleArray[i], "id");
+    outAlleleIDs.push_back(id);
+  }
+  return outAlleleIDs.size();
+}
+
 int JSON2SG::parseAllele(const char* buffer, int& outID,
                          vector<SGSegment>& outPath,
                          int& outVariantSetID, string& outName)
