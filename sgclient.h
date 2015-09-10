@@ -111,6 +111,8 @@ public:
    sg_int_t getSGSeqID(sg_int_t sgID) const;
    /** Apply mapping (original->sg) to join */
    void mapSeqIDsInJoin(SGJoin& join) const;
+   /** Apply mapping (original->sg) to every segment in path */
+   void mapSeqIDsInPath(std::vector<SGSegment>& path) const;
    /** Add a mapping */
    void addSeqIDMapping(sg_int_t originalID, sg_int_t sgID);
    
@@ -200,6 +202,18 @@ inline void SGClient::mapSeqIDsInJoin(SGJoin& join) const
                          getSGSeqID(join.getSide2().getBase().getSeqID()),
                          join.getSide2().getBase().getPos()),
                        join.getSide2().getForward()));
+}
+
+inline void SGClient::mapSeqIDsInPath(std::vector<SGSegment>& path) const
+{
+  for (int i = 0; i < path.size(); ++i)
+  {
+    // man, that crappy SideGraph write interface is coming to bite me. 
+    path[i].setSide(SGSide(SGPosition(
+                             getSGSeqID(path[i].getSide().getBase().getSeqID()),
+                             path[i].getSide().getBase().getPos()),
+                           path[i].getSide().getForward()));
+  }
 }
 
 inline void SGClient::addSeqIDMapping(sg_int_t originalID, sg_int_t sgID)
