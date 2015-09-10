@@ -5,26 +5,18 @@ HOSTNAME = $(shell hostname)
 MACH = $(shell uname -m)
 SYS =  $(shell uname -s)
 
+cxx = cc -std=c99
+cpp = c++ 
+
 platformCompileFlags=
 platformLinkFlags=
 
 #C compiler
-ifeq (${SYS},FreeBSD)
-    # default FreeBSD gcc (4.2.1) has warning bug
-    #cxx = gcc46 -std=c99 -Wno-unused-but-set-variable
-    cxx = gcc34 -std=c99 -Wno-unused-but-set-variable
-    cpp = g++
-else ifeq ($(SYS),Darwin) #This is to deal with the Mavericks replacing gcc with clang fully
-	cxx = clang -std=c99 
-	cpp = clang++
+ifeq ($(SYS),Darwin)
 	platformCompileFlags = -I/opt/local/include
 	platformLinkFlags g =  -L/opt/local/lib
 else
-    cxx = gcc -std=c99
-    cpp = g++ 
 endif
-
-# -Wno-unused-result
 
 # Compiler flags.
 # DO NOT put static library -l options here. Those must be specified *after*
@@ -49,7 +41,7 @@ cflags_prof = -Wall -Werror --pedantic -pg -O3
 cppflags = ${cppflags_opt} 
 
 #Flags to use
-cflags = ${cflags_dbg} 
+cflags = ${cflags_opt} 
 
 binPath=${rootPath}
 libPath=${rootPath}
