@@ -402,8 +402,15 @@ int SGClient::downloadAllelePaths(vector<NamedPath>& outPaths,
     allelePath.second.clear();
     ret = downloadAllele(alleleIDs[i], allelePath.second, alleleVariantSetID,
                          allelePath.first);
-    outPaths.push_back(NamedPath());
-    swap(outPaths.back(), allelePath);
+    if (ret < 0)
+    {
+      os() << "Warning: Error downloading path for allele " << alleleIDs[i]
+           << endl;
+    }
+    else
+    {
+      outPaths.push_back(allelePath);
+    }
   }
 
   return nextPageToken;
