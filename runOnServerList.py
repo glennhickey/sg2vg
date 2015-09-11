@@ -16,7 +16,7 @@ sg2vg runs without error on all the latest servers
 
 import argparse, sys, os, os.path, random, subprocess, shutil, itertools
 import collections, urllib2, shutil, subprocess, glob, doctest
-import urllib2
+import urllib2, datetime
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description=__doc__, 
@@ -30,6 +30,9 @@ def parse_args(args):
     parser.add_argument("--version",
                         help="protocol version",
                         default="v0.6.g")
+    parser.add_argument("--page",
+                        help="sg2vg pageSize", type=int,
+                        default=None)
     
     args = args[1:]
 
@@ -51,7 +54,11 @@ def run_server(line, options, errorSummary):
     errPath = os.path.join(options.outDir, name + ".stderr")
     errFile = open(errPath, "w")
 
-    command = "sg2vg {} -u".format(vurl)
+    flags = "-u"
+    if options.page is not None:
+        flags += " -p {}".format(options.page)
+    now = datetime.datetime.now()
+    command = "sg2vg {} {}".format(vurl, flags)
     ret = subprocess.call(command, shell=True, stdout=jsonFile,
                           stderr=errFile, bufsize=-1)
 
@@ -63,6 +70,7 @@ def run_server(line, options, errorSummary):
     errFile.close()
 
     # keep a log of whats happening in stderr
+    sys.stderr.write(now.strftime("%Y-%m-%d %H:%M:%S\n"))
     sys.stderr.write(command)
     sys.stderr.write("\n")
     sys.stderr.write(errorString)

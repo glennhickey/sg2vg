@@ -402,15 +402,11 @@ int SGClient::downloadAllelePaths(vector<NamedPath>& outPaths,
     allelePath.second.clear();
     ret = downloadAllele(alleleIDs[i], allelePath.second, alleleVariantSetID,
                          allelePath.first);
-    if (ret < 0)
-    {
-      os() << "Warning: Error downloading path for allele " << alleleIDs[i]
-           << endl;
-    }
-    else
+    if (ret >= 0)
     {
       outPaths.push_back(allelePath);
     }
+    // Note: if ret < 0, then downloadAllele spits warning
   }
 
   return nextPageToken;
@@ -436,6 +432,11 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
   if (ret >=0 && outID != alleleID)
   {
     throw runtime_error("AlleleID mismatch");
+  }
+  if (ret < 0)
+  {
+    os() << "Warning: Unable to download allele with ID " << alleleID
+         << ". Server returned: " << result << endl;
   }
 
   verifyInPath(alleleID, outPath);
