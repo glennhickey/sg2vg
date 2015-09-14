@@ -25,11 +25,17 @@ Download entire graph from server into memory.  Cut sequences so that all joins 
 
 To run the converter:
 
-	  sg2vg graph-url > graph.json && vg view -J  graph.json -v > graph.vg
+	  sg2vg graph-url -u | vg view -J -v - > graph.vg
 
 `graph-url` URL of graph server with version attached at end
 
-`graph.vg` Output VG graph.  VG must be installed for `vg view` commands to work...
+`graph.vg` Output VG graph.  VG must be installed for `vg view` to work...
 
-To see all the options, run with no args or use `--help`.
+**Options**
+
+    -h, --help
+    -p, --pageSize     Number of records per POST request (default=1000).
+    -u, --upper        Write all sequences in upper case. (RECOMMENDED)
+    -a, --paths        Add a VG path for each input sequence.
+     
 
