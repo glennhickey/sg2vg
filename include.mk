@@ -25,7 +25,7 @@ endif
 #Release compiler flags
 cflags_opt = -O3 -g -Wall --pedantic -funroll-loops -DNDEBUG 
 #-fopenmp
-cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG 
+cppflags_opt = -O3 -g -Wall -funroll-loops -DNDEBUG -Wno-sign-compare
 
 #Debug flags (slow)
 cflags_dbg = -Wall -Werror --pedantic -g -fno-inline
