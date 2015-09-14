@@ -14,7 +14,8 @@ using namespace std;
 
 
 Side2Seq::Side2Seq() : _inGraph(NULL), _inBases(NULL), _inPaths(NULL),
-                       _outGraph(NULL), _forceUpper(false)
+                       _outGraph(NULL), _forceUpper(false),
+                       _makeSeqPaths(false)
 {
   
 }
@@ -31,6 +32,8 @@ void Side2Seq::reset()
   _inPaths = NULL;
   delete _outGraph;
   _forceUpper = false;
+  _makeSeqPaths = false;
+  _seqPathPrefix.clear();
   _outBases.clear();
   _outPaths.clear();
   _joinSet2.clear();
@@ -39,7 +42,9 @@ void Side2Seq::reset()
 void Side2Seq::init(const SideGraph* sg,
                     const vector<string>* bases,
                     const vector<NamedPath>* paths,
-                    bool forceUpperCase)
+                    bool forceUpperCase,
+                    bool makeSequencePaths,
+                    const string& seqPathPrefix)
 {
   reset();
   _inGraph = sg;
@@ -49,6 +54,8 @@ void Side2Seq::init(const SideGraph* sg,
   _outGraph = new SideGraph();
 
   _forceUpper = forceUpperCase;
+  _makeSeqPaths = makeSequencePaths;
+  _seqPathPrefix = seqPathPrefix;
 
   // re-index joins based on side2
   const SideGraph::JoinSet* js = _inGraph->getJoinSet();
@@ -82,10 +89,24 @@ void Side2Seq::convert()
   }
 
   // convert the paths;
-  _outPaths.resize(_inPaths->size());
   for (int i = 0; i < _inPaths->size(); ++i)
   {
-    convertPath(i);
+    convertPath(_inPaths->at(i));
+  }
+  
+  // add an input path for each input sequence if specified
+  if (_makeSeqPaths == true)
+  {
+    for (int i = 0; i < _inGraph->getNumSequences(); ++i)
+    {
+      const SGSequence* seq = _inGraph->getSequence(i);
+      NamedPath seqPath;
+      // is this name unique? should sequence id be encoded?
+      seqPath.first = _seqPathPrefix + seq->getName();
+      seqPath.second.push_back(
+        SGSegment(SGSide(SGPosition(seq->getID(), 0), true), seq->getLength()));
+      convertPath(seqPath);
+    }
   }
 }
 
@@ -187,13 +208,10 @@ void Side2Seq::verifyOutJoin(const SGJoin* join)
   }
 }
 
-void Side2Seq::convertPath(int inPathIdx)
+void Side2Seq::convertPath(const NamedPath& inPath)
 {
-  // outPaths gets resized somewhere above
-  assert(_outPaths.size() > inPathIdx);
-
-  const NamedPath& inPath = _inPaths->at(inPathIdx);
-  NamedPath& outPath = _outPaths[inPathIdx];
+  _outPaths.resize(_outPaths.size() + 1);
+  NamedPath& outPath = _outPaths.back();
   outPath.first = inPath.first;  
   for (int i = 0; i < inPath.second.size(); ++i)
   {
@@ -227,7 +245,7 @@ void Side2Seq::convertPath(int inPathIdx)
         if (_outGraph->getJoin(&bridge) == NULL)
         {
           stringstream ss;
-          ss << "Error converting " << inPathIdx << "th path with name="
+          ss << "Error converting path with name="
              << inPath.first << ": missing join " << bridge
              << ". This is probably a BUG, please report it!";
           throw runtime_error(ss.str());
@@ -240,7 +258,7 @@ void Side2Seq::convertPath(int inPathIdx)
     if (seq1 != seq1)
     {
       stringstream ss;
-      ss << "Error converting " << inPathIdx << "th path with name="
+      ss << "Error converting path with name="
          << inPath.first << ": output path does not match"
          << ". This is probably a BUG, please report it!";
       throw runtime_error(ss.str());

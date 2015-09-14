@@ -47,7 +47,9 @@ public:
    void init(const SideGraph* sg,
              const std::vector<std::string>* bases,
              const std::vector<NamedPath>* paths,
-             bool forceUpperCase = false);
+             bool forceUpperCase = false,
+             bool makeSequencePaths = false,
+             const std::string& seqPathPrefix = "&SG_");
 
    /** Convert the graph into a new sidegraph, bases, and paths */
    void convert();
@@ -68,7 +70,7 @@ public:
 
    /** get dna from an output sequence */
    void getOutDNA(const SGSegment& seg, std::string& outDNA) const;   
-
+   
    /** copied from halCommon.h -- dont want hal dep just for this*/
    static char reverseComplement(char c);
    static void reverseComplement(std::string& s);
@@ -88,7 +90,7 @@ protected:
    void verifyOutJoin(const SGJoin* join);
 
    /** map a path to the out graph */
-   void convertPath(int inPathIdx);
+   void convertPath(const NamedPath& inPath);
 
    /** get all positions in range that are incident to one or more joins */
    int getIncidentJoins(const SGSide& start, const SGSide& end,
@@ -106,6 +108,8 @@ protected:
    std::vector<std::string> _outBases;
    std::vector<NamedPath> _outPaths;
    bool _forceUpper;
+   bool _makeSeqPaths;
+   std::string _seqPathPrefix;
 
    // map Side Graph to Sequence Graph coords. 
    SGLookup _luTo;
