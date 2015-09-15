@@ -25,7 +25,7 @@ void help(char** argv)
        << "\nusage: " << argv[0] << " <URL> [options]\n"
        << "args:\n"
        << "    URL:  Input GA4GH graph server URL to convert\n"
-       << "          (Important: URL must end with version, ex. v0.6.g)\n"
+       << "          (Important: URL must end with version, ex. /v0.6.g)\n"
        << "options:\n"
        << "    -h, --help         \n"
        << "    -p, --pageSize     Number of records per POST request "
