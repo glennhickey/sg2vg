@@ -5,6 +5,9 @@ HOSTNAME = $(shell hostname)
 MACH = $(shell uname -m)
 SYS =  $(shell uname -s)
 
+# We need bash for pushd and popd
+SHELL=/bin/bash
+
 cxx = cc -std=c99
 cpp = c++ 
 
