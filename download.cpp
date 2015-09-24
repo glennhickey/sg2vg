@@ -18,6 +18,7 @@ using namespace std;
 
 Download::Download()
 {
+  _buffer.memory = NULL;
   clearBuffer();
 }
 
@@ -38,6 +39,7 @@ void Download::cleanup()
 
 void Download::clearBuffer()
 {
+  free(_buffer.memory);
   _buffer.memory = (char*)malloc(1);
   _buffer.size = 0;
 }
