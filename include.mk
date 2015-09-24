@@ -54,7 +54,7 @@ rapidJsonPath=${rootPath}/rapidjson
 
 cflags +=  -I ${sgExportPath} ${platformCompileFlags}
 cppflags +=  -I ${sgExportPath} -I ${rapidJsonPath}/include ${platformCompileFlags}
-basicLibs = ${sgExportPath}/sgExport.a -lz ${platformLinkFlags} -lcurl
+basicLibs = ${sgExportPath}/sgExport.a -static-libstdc++ -static-libgcc -lz ${platformLinkFlags} -lcurl
 basicLibsDependencies = ${sgExportPath}/sgExport.a
 
 
