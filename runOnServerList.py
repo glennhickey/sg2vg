@@ -33,6 +33,10 @@ def parse_args(args):
     parser.add_argument("--page",
                         help="sg2vg pageSize", type=int,
                         default=None)
+    parser.add_argument("--vg",
+                        help="write vg instead of json (with vg mod -X 100 and vg ids -s)",
+                        action="store_true",
+                        default=False)
     
     args = args[1:]
 
@@ -49,21 +53,27 @@ def run_server(line, options, errorSummary):
     vurl = os.path.join(url, options.version)
 
     # pipe stdout and stderr to files
-    jsonPath = os.path.join(options.outDir, name + ".json")
-    jsonFile = open(jsonPath, "w")
+    if not options.vg:
+        outPath = os.path.join(options.outDir, name + ".json")
+    else:
+        outPath = os.path.join(options.outDir, name + ".vg")
+    outFile = open(outPath, "w")
     errPath = os.path.join(options.outDir, name + ".stderr")
     errFile = open(errPath, "w")
 
-    flags = "-u"
+    flags = "-u -a"
     if options.page is not None:
         flags += " -p {}".format(options.page)
     now = datetime.datetime.now()
     command = "sg2vg {} {}".format(vurl, flags)
-    ret = subprocess.call(command, shell=True, stdout=jsonFile,
+    if options.vg:
+        # hardcode adams options:
+        command += " | vg view -Jv - | vg mod -X 100 - | vg ids -s -"
+    ret = subprocess.call(command, shell=True, stdout=outFile,
                           stderr=errFile, bufsize=-1)
 
     # read error back into string and close files
-    jsonFile.close()
+    outFile.close()
     errFile.close()
     errFile = open(errPath, "r")
     errorString = errFile.read()
