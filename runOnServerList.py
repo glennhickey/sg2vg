@@ -61,7 +61,7 @@ def run_server(line, options, errorSummary):
     errPath = os.path.join(options.outDir, name + ".stderr")
     errFile = open(errPath, "w")
 
-    flags = "-u -a"
+    flags = "-u"
     if options.page is not None:
         flags += " -p {}".format(options.page)
     now = datetime.datetime.now()
