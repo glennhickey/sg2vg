@@ -98,18 +98,18 @@ def parseLine(line):
     """
     toks = line.split("\t")
     if len(toks) < 2:
-        raise "Invalid Server Line: {}".format(line)
+        raise RuntimeError("Invalid Server Line: {}".format(line))
     url = toks[1]
     if not url.startswith("http://"):
-        raise "Invalid Server URL: {}".format(url)
+        raise RuntimeError("Invalid Server URL: {}".format(url))
     utoks = url.split("/")
     if len(utoks) < 4:
-        raise "Invalid Server URL: {}".format(url)
+        raise RuntimeError("Invalid Server URL: {}".format(url))
     name = utoks[-1]
     if len(name) == 0:
         name = utoks[-2]
     if len(name) == 0:
-        raise "Invalid Server URL: {}".format(url)
+        raise RuntimeError("Invalid Server URL: {}".format(url))
     return name, url
     
 def mungeError(errorString):
@@ -141,7 +141,8 @@ def main(args):
     
     # do each line
     for line in serverLines:
-        run_server(line, options, errorSummary)
+        if len(line.strip()) > 0:
+            run_server(line, options, errorSummary)
 
     if errorSummary[0] > 0:
         sys.stderr.write("Error Summary\n")
