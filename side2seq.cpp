@@ -303,7 +303,8 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
     ++next;
     // next side is 1 position to the right of cur AND
     // next side is on left of position (forward) and cur is on right (back)
-    if (next->getBase().getSeqID() == cur->getBase().getSeqID() &&
+    if (next != outSides.end() &&
+        next->getBase().getSeqID() == cur->getBase().getSeqID() &&
         next->getBase().getPos() == cur->getBase().getPos() + 1 &&
         next->getForward() == true && cur->getForward() == false)
     {
