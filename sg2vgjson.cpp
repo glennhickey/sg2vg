@@ -115,8 +115,14 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
     position.SetObject();
     // node id's are 1-based in VG! 
     addInt(position, "node_id", path[i].getSide().getBase().getSeqID() + 1);
-    addInt(position, "offset", 0);
-    
+    if (path[i].getSide().getForward())
+    {
+      addInt(position, "offset", 0);
+    }
+    else
+    {
+      addInt(position, "offset", path[i].getLength() - 1);
+    }
     Value mapping;
     mapping.SetObject();
     mapping.AddMember("position", position, allocator());
