@@ -253,6 +253,19 @@ void Side2Seq::convertPath(const NamedPath& inPath)
       }
       outPath.second.push_back(frag[j]);
     }
+
+    // Do not write a vg path that has a repeated segment. 
+    // This should be temporary until vg supports cycles in paths
+    if (set<SGSegment>(outPath.second.begin(), outPath.second.end()).size() <
+        outPath.second.size())
+    {
+      cerr << "Warning: Skipping input path " << inPath.first
+           << " because it contains a cycle.  VG does not currently"
+           << " support cycles in paths." << endl;
+      _outPaths.pop_back();
+      return;
+    }
+    
     transform(seq1.begin(), seq1.end(), seq1.begin(), ::toupper);
     transform(seq2.begin(), seq2.end(), seq2.begin(), ::toupper);
     if (seq1 != seq1)
@@ -377,3 +390,4 @@ void Side2Seq::reverseComplement(std::string& s)
     } while (true);
   }
 }
+
