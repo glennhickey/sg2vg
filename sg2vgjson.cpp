@@ -111,17 +111,30 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
   mappings.SetArray();
   for (int i = 0; i < path.size(); ++i)
   {
+    sg_int_t sgSeqID = path[i].getSide().getBase().getSeqID();
+    
+    if (i > 0 && i < path.size() - 1 &&
+        path[i].getLength() != _sg->getSequence(sgSeqID)->getLength())
+    {
+      stringstream ss;
+      ss << "Sanity check fail for Mapping " << i << " of path " << name
+         << ": Segment size " << path[i].getLength() << " does not span "
+         << "all of node " << (sgSeqID + 1) << " which has length "
+         << _sg->getSequence(sgSeqID)->getLength();
+      throw (ss.str());
+    }
+    
     Value position;
     position.SetObject();
-    // node id's are 1-based in VG! 
-    addInt(position, "node_id", path[i].getSide().getBase().getSeqID() + 1);
+    // node id's are 1-based in VG!
+    addInt(position, "node_id", sgSeqID + 1);
     if (path[i].getSide().getForward())
     {
       addInt(position, "offset", 0);
     }
     else
     {
-      addInt(position, "offset", path[i].getLength() - 1);
+      addInt(position, "offset", _sg->getSequence(sgSeqID)->getLength() - 1);
     }
     Value mapping;
     mapping.SetObject();
