@@ -127,6 +127,7 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
     mapping.SetObject();
     mapping.AddMember("position", position, allocator());
     addBool(mapping, "is_reverse", !path[i].getSide().getForward());
+    addInt(mapping, "rank", i + 1);
     mappings.PushBack(mapping, allocator());
   }
   jpath.AddMember("mapping", mappings, allocator());
