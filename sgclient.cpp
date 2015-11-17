@@ -439,8 +439,18 @@ int SGClient::downloadAllele(int alleleID, vector<SGSegment>& outPath,
          << ". Server returned: " << result << endl;
   }
 
-  verifyInPath(alleleID, outPath);
-  mapSeqIDsInPath(outPath);
+  try
+  {
+    verifyInPath(alleleID, outPath);
+    mapSeqIDsInPath(outPath);
+  }
+  catch (exception& e)
+  {
+    os() << "Warning: Skipping allele path " << outName
+         << " because validation produced the following error: " << e.what()
+         << endl;
+    ret = -1;
+  }
 
   return ret;
 }
@@ -551,7 +561,6 @@ void SGClient::verifyInPath(int alleleID, const vector<SGSegment>& path) const
            << " ]" 
            << " of allele path "
            << alleleID << " not found in input graph";
-        cerr << ss.str() << endl;
         throw runtime_error(ss.str());
       }
     }
