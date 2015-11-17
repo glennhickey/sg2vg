@@ -121,7 +121,7 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
          << ": Segment size " << path[i].getLength() << " does not span "
          << "all of node " << (sgSeqID + 1) << " which has length "
          << _sg->getSequence(sgSeqID)->getLength();
-      throw (ss.str());
+      throw runtime_error(ss.str());
     }
     
     Value position;

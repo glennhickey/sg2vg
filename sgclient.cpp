@@ -514,6 +514,47 @@ void SGClient::verifyInPath(int alleleID, const vector<SGSegment>& path) const
          << seq->getLength();
       throw runtime_error(ss.str());      
     }
+
+    if (i > 0)
+    {
+      const SGSegment& prev = path[i - 1];
+      const SGSide& fromSide = prev.getOutSide();
+      const SGSide& toSide = seg.getInSide();
+      SGJoin join(fromSide, toSide);
+      mapSeqIDsInJoin(join);
+      if (!join.isTrivial() && _sg->getJoin(&join) == NULL)
+      {
+        stringstream ss;
+        ss << "Join, ["
+           << " (Seq:" << fromSide.getBase().getSeqID()
+           << ", Pos:" << fromSide.getBase().getPos()
+           << ", " << (fromSide.getForward() == true ?
+                       "POS_STRAND" : "NEG_STRAND")
+           << ") -> "
+           << " (Seq:" << toSide.getBase().getSeqID()
+           << ", Pos:" << toSide.getBase().getPos()
+           << ", " << (toSide.getForward() == true ?
+                       "POS_STRAND" : "NEG_STRAND") << ") ]"
+           << ", implied by segment " << (i - 1) << " = ["
+           << " Seq:" << prev.getSide().getBase().getSeqID()
+           << ", Pos:" << prev.getSide().getBase().getPos()
+           << ", Len:" << prev.getLength() 
+           << ", " << (prev.getSide().getForward() == true ?
+                       "POS_STRAND" : "NEG_STRAND")
+           << " ]" 
+           << " and segment " << i << " = ["
+           << " Seq:" << seg.getSide().getBase().getSeqID()
+           << ", Pos:" << seg.getSide().getBase().getPos()
+           << ", Len:" << seg.getLength() 
+           << ", " << (seg.getSide().getForward() == true ?
+                       "POS_STRAND" : "NEG_STRAND")
+           << " ]" 
+           << " of allele path "
+           << alleleID << " not found in input graph";
+        cerr << ss.str() << endl;
+        throw runtime_error(ss.str());
+      }
+    }
   }
 }
 
