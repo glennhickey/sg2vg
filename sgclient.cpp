@@ -21,7 +21,8 @@ using namespace rapidjson;
 const int SGClient::DefaultPageSize = 1000;
 const string SGClient::CTHeader = "Content-Type: application/json";
 
-SGClient::SGClient() : _sg(0), _os(0), _pageSize(DefaultPageSize)
+SGClient::SGClient() : _sg(0), _os(0), _pageSize(DefaultPageSize),
+                       _skipPaths(false)
 {
 
 }
@@ -73,6 +74,11 @@ void SGClient::setPageSize(int pageSize)
   _pageSize = pageSize;
 }
 
+void SGClient::setSkipPaths(bool skipPaths)
+{
+  _skipPaths = skipPaths;
+}
+
 ostream& SGClient::os()
 {
   return _os != NULL ? *_os : _ignore;
@@ -114,12 +120,15 @@ const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
 
 
   outPaths.clear();
-  os() << "Downloading allele paths... ";
-  for (int pageToken = 0; pageToken >= 0;)
+  if (_skipPaths == false)
   {
-    pageToken = downloadAllelePaths(outPaths, pageToken, _pageSize);
+    os() << "Downloading allele paths... ";
+    for (int pageToken = 0; pageToken >= 0;)
+    {
+      pageToken = downloadAllelePaths(outPaths, pageToken, _pageSize);
+    }
+    os() << "(" << outPaths.size() << " paths retrieved)" << endl;
   }
-  os() << "(" << outPaths.size() << " paths retrieved)" << endl;
   
   return getSideGraph();
 }

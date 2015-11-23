@@ -48,6 +48,9 @@ public:
    /** set the Page Size for POST requests */
    void setPageSize(int pageSize);
 
+   /** toggle whether paths are downloaded */
+   void setSkipPaths(bool skipPaths);
+
    typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
    /** Download a whole Side Graph into memory.  Topolgy gets stored 
     * internally in (returned) SideGraph, path and bases get stored in 
@@ -173,6 +176,7 @@ protected:
    std::ostream* _os;
    std::stringstream _ignore;
    int _pageSize;
+   bool _skipPaths;
 };
 
 inline sg_int_t SGClient::getOriginalSeqID(sg_int_t sgID) const

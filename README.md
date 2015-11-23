@@ -37,5 +37,5 @@ To run the converter:
     -p, --pageSize     Number of records per POST request (default=1000).
     -u, --upper        Write all sequences in upper case. (RECOMMENDED)
     -a, --paths        Add a VG path for each input sequence.
-     
+    -n, --no-paths     Don't write any paths.     
 

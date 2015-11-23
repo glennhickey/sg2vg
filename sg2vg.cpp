@@ -32,6 +32,7 @@ void help(char** argv)
        << "(default=" << SGClient::DefaultPageSize << ").\n"
        << "    -u, --upper        Write all sequences in upper case.\n"
        << "    -a, --paths        Add a VG path for each input sequence.\n"
+       << "    -n, --no-paths     Don't write any paths.\n"
        << endl;
 }
 
@@ -46,6 +47,7 @@ int main(int argc, char** argv)
   int pageSize = SGClient::DefaultPageSize;
   bool upperCase = false;
   bool seqPaths = false;
+  bool skipPaths = false;
   optind = 1;
   while (true)
   {
@@ -54,10 +56,11 @@ int main(int argc, char** argv)
          {"help", no_argument, 0, 'h'},
          {"page", required_argument, 0, 'p'},
          {"upper", no_argument, 0, 'u'},
-         {"paths", no_argument, 0, 'a'}
+         {"paths", no_argument, 0, 'a'},
+         {"no-paths", no_argument, 0, 'n'}
        };
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hp:ua", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hp:uan", long_options, &option_index);
 
     if (c == -1)
     {
@@ -79,6 +82,9 @@ int main(int argc, char** argv)
     case 'a':
       seqPaths = true;
       break;
+    case 'n':
+      skipPaths = true;
+      break;
     default:
       abort();
     }
@@ -92,6 +98,7 @@ int main(int argc, char** argv)
   sgClient.setURL(url);
   sgClient.setOS(&cerr);
   sgClient.setPageSize(pageSize);
+  sgClient.setSkipPaths(skipPaths);
 
   // ith element is bases for sequence with id i in side graph
   vector<string> bases;
