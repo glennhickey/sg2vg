@@ -63,6 +63,16 @@ void Side2Seq::init(const SideGraph* sg,
   {
     _joinSet2.insert(*i);
   }
+
+  // index path endpoints, as we have to potentially break up nodes
+  // based on them, in addition to joins
+  _inPathEnds.clear();
+  for (int i = 0; i < _inPaths->size(); ++i)
+  {
+    const NamedPath& namedPath = _inPaths->at(i);
+    _inPathEnds.insert(namedPath.second[0].getInSide());
+    _inPathEnds.insert(namedPath.second.back().getOutSide());
+  }
 }
 
 void Side2Seq::convert()
@@ -291,6 +301,14 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
   for (; j != _joinSet2.end() && (*j)->getSide2() <= end; ++j)
   {
     outSides.insert((*j)->getSide2());
+  }
+
+  // a path endpoint can induce a cut, without having any join connnected to it
+  set<SGSide>::const_iterator k = _inPathEnds.lower_bound(start);
+  set<SGSide>::const_iterator l = _inPathEnds.upper_bound(end);
+  for (; k != l; ++k)
+  {
+    outSides.insert(*k);
   }
 
   // filter sides that would induce same cut (probably would have

@@ -109,6 +109,8 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
   addString(jpath, "name", name);
   Value mappings;
   mappings.SetArray();
+  int inputPathLength = 0;
+  int outputPathLength = 0;
   for (int i = 0; i < path.size(); ++i)
   {
     sg_int_t sgSeqID = path[i].getSide().getBase().getSeqID();
@@ -123,6 +125,7 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
          << _sg->getSequence(sgSeqID)->getLength();
       throw runtime_error(ss.str());
     }
+    inputPathLength += path[i].getLength();
     
     Value position;
     position.SetObject();
@@ -136,12 +139,20 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
     {
       addInt(position, "offset", _sg->getSequence(sgSeqID)->getLength() - 1);
     }
+    outputPathLength += _sg->getSequence(sgSeqID)->getLength();    
     Value mapping;
     mapping.SetObject();
     mapping.AddMember("position", position, allocator());
     addBool(mapping, "is_reverse", !path[i].getSide().getForward());
     addInt(mapping, "rank", i + 1);
     mappings.PushBack(mapping, allocator());
+  }
+  if (inputPathLength != outputPathLength)
+  {
+    stringstream ss;
+    ss << "Sanity check fail for path " << name << ": input length ("
+       << inputPathLength << ") != output length (" << outputPathLength << ")";
+    throw runtime_error(ss.str());
   }
   jpath.AddMember("mapping", mappings, allocator());
   paths().PushBack(jpath, allocator());

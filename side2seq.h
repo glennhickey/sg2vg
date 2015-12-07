@@ -103,6 +103,7 @@ protected:
    const SideGraph* _inGraph;
    const std::vector<std::string>* _inBases;
    const std::vector<NamedPath>* _inPaths;
+   std::set<SGSide> _inPathEnds;
    
    SideGraph* _outGraph;
    std::vector<std::string> _outBases;
