@@ -185,8 +185,8 @@ void inversionTest(CuTest *testCase)
   const vector<string> outBases = converter.getOutBases();
   const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
 
-  // first sequence should be cut up into 4, and 2nd into 6
-  CuAssertTrue(testCase, outGraph->getNumSequences() == 10);
+  // first sequence should be cut up into 4, and 2nd into 7
+  CuAssertTrue(testCase, outGraph->getNumSequences() == 11);
   CuAssertTrue(testCase, outGraph->getSequence(0)->getLength() == 6);
   CuAssertTrue(testCase, outGraph->getSequence(1)->getLength() == 3);
   CuAssertTrue(testCase, outGraph->getSequence(2)->getLength() == 2);
@@ -197,7 +197,8 @@ void inversionTest(CuTest *testCase)
   CuAssertTrue(testCase, outGraph->getSequence(6)->getLength() == 1);
   CuAssertTrue(testCase, outGraph->getSequence(7)->getLength() == 1);
   CuAssertTrue(testCase, outGraph->getSequence(8)->getLength() == 1);
-  CuAssertTrue(testCase, outGraph->getSequence(9)->getLength() == 4);
+  CuAssertTrue(testCase, outGraph->getSequence(9)->getLength() == 2);
+  CuAssertTrue(testCase, outGraph->getSequence(10)->getLength() == 2);
 
   // joins
 
@@ -236,7 +237,7 @@ void inversionTest(CuTest *testCase)
     CuAssertTrue(testCase, outGraph->getJoin(&j5) != NULL);
   }
   
-  CuAssertTrue(testCase, outGraph->getJoinSet()->size() == 12);
+  CuAssertTrue(testCase, outGraph->getJoinSet()->size() == 13);
 }
 
 ///////////////////////////////////////////////////////////
