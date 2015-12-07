@@ -226,14 +226,9 @@ void Side2Seq::convertPath(const NamedPath& inPath)
   for (int i = 0; i < inPath.second.size(); ++i)
   {
     const SGSegment& seg = inPath.second[i];
-    SGPosition firstPos = seg.getMinPos();
-    SGPosition lastPos = seg.getMaxPos();
-    if (seg.getSide().getForward() == false)
-    {
-      swap(firstPos, lastPos);
-    }
     vector<SGSegment> frag;
-    _luTo.getPath(firstPos, lastPos, frag);
+    _luTo.getPath(seg.getSide().getBase(), seg.getLength(),
+                  seg.getSide().getForward(), frag);
     
     // to verify bases match
     string seq1;
