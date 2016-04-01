@@ -131,19 +131,16 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
     position.SetObject();
     // node id's are 1-based in VG!
     addInt(position, "node_id", sgSeqID + 1);
-    if (path[i].getSide().getForward())
-    {
-      addInt(position, "offset", 0);
-    }
-    else
-    {
-      addInt(position, "offset", _sg->getSequence(sgSeqID)->getLength() - 1);
-    }
+    // Offsets are along the strand of the node that is being visited.
+    // We always use the whole node.
+    addInt(position, "offset", 0);
+    
+    addBool(position, "is_reverse", !path[i].getSide().getForward());
+    
     outputPathLength += _sg->getSequence(sgSeqID)->getLength();    
     Value mapping;
     mapping.SetObject();
     mapping.AddMember("position", position, allocator());
-    addBool(mapping, "is_reverse", !path[i].getSide().getForward());
     addInt(mapping, "rank", i + 1);
     mappings.PushBack(mapping, allocator());
   }
