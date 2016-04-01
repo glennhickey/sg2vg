@@ -115,8 +115,7 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
   {
     sg_int_t sgSeqID = path[i].getSide().getBase().getSeqID();
     
-    if (i > 0 && i < path.size() - 1 &&
-        path[i].getLength() != _sg->getSequence(sgSeqID)->getLength())
+    if (path[i].getLength() != _sg->getSequence(sgSeqID)->getLength())
     {
       stringstream ss;
       ss << "Sanity check fail for Mapping " << i << " of path " << name
