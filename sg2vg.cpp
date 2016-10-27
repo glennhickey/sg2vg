@@ -104,7 +104,7 @@ int main(int argc, char** argv)
   vector<string> bases;
 
   // ith element is <name, segment vector> for allele i
-  vector<SGClient::NamedPath> paths;
+  vector<SGNamedPath> paths;
 
   const SideGraph* sg = sgClient.downloadGraph(bases, paths);
 
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 
   const SideGraph* outGraph = converter.getOutGraph();
   const vector<string>& outBases = converter.getOutBases();
-  const vector<SGClient::NamedPath>& outPaths = converter.getOutPaths();
+  const vector<SGNamedPath>& outPaths = converter.getOutPaths();
   
   // write to vg json
   cerr << "Writing VG JSON to stdout" << endl;

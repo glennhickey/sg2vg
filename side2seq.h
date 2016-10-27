@@ -38,15 +38,11 @@ public:
 
    void reset();
 
-   // Needs to be same as one in SGClient (but do separately since want this
-   // class to stand alone from SGClient for some reason)
-   typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
-
    /** Load of a SideGraph, some bases, and some paths.  note we do not 
     * copy anything*/
    void init(const SideGraph* sg,
              const std::vector<std::string>* bases,
-             const std::vector<NamedPath>* paths,
+             const std::vector<SGNamedPath>* paths,
              bool forceUpperCase = false,
              bool makeSequencePaths = false,
              const std::string& seqPathPrefix = "&SG_",
@@ -64,7 +60,7 @@ public:
 
    /** Get the converted paths.  The ith element is the path in outgraph
     * that was converted from the ith path in the input bases */
-   const std::vector<NamedPath>& getOutPaths() const;
+   const std::vector<SGNamedPath>& getOutPaths() const;
 
    /** get dna from an input sequence */
    void getInDNA(const SGSegment& seg, std::string& outDNA) const;
@@ -91,7 +87,7 @@ protected:
    void verifyOutJoin(const SGJoin* join);
 
    /** map a path to the out graph */
-   void convertPath(const NamedPath& inPath);
+   void convertPath(const SGNamedPath& inPath);
 
    /** get all positions in range that are incident to one or more joins */
    void getIncidentJoins(const SGSide& start, const SGSide& end,
@@ -111,12 +107,12 @@ protected:
    
    const SideGraph* _inGraph;
    const std::vector<std::string>* _inBases;
-   const std::vector<NamedPath>* _inPaths;
+   const std::vector<SGNamedPath>* _inPaths;
    std::set<SGSide> _inPathEnds;
    
    SideGraph* _outGraph;
    std::vector<std::string> _outBases;
-   std::vector<NamedPath> _outPaths;
+   std::vector<SGNamedPath> _outPaths;
    bool _forceUpper;
    bool _makeSeqPaths;
    std::string _seqPathPrefix;
@@ -143,7 +139,7 @@ inline const std::vector<std::string>& Side2Seq::getOutBases() const
   return _outBases;
 }
 
-inline const std::vector<Side2Seq::NamedPath>& Side2Seq::getOutPaths() const
+inline const std::vector<SGNamedPath>& Side2Seq::getOutPaths() const
 {
   return _outPaths;
 }

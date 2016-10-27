@@ -42,7 +42,7 @@ void Side2Seq::reset()
 
 void Side2Seq::init(const SideGraph* sg,
                     const vector<string>* bases,
-                    const vector<NamedPath>* paths,
+                    const vector<SGNamedPath>* paths,
                     bool forceUpperCase,
                     bool makeSequencePaths,
                     const string& seqPathPrefix,
@@ -72,7 +72,7 @@ void Side2Seq::init(const SideGraph* sg,
   _inPathEnds.clear();
   for (int i = 0; i < _inPaths->size(); ++i)
   {
-    const NamedPath& namedPath = _inPaths->at(i);
+    const SGNamedPath& namedPath = _inPaths->at(i);
     _inPathEnds.insert(namedPath.second[0].getInSide());
     _inPathEnds.insert(namedPath.second.back().getOutSide());
   }
@@ -113,7 +113,7 @@ void Side2Seq::convert()
     for (int i = 0; i < _inGraph->getNumSequences(); ++i)
     {
       const SGSequence* seq = _inGraph->getSequence(i);
-      NamedPath seqPath;
+      SGNamedPath seqPath;
       // is this name unique? should sequence id be encoded?
       seqPath.first = _seqPathPrefix + seq->getName();
       seqPath.second.push_back(
@@ -227,10 +227,10 @@ void Side2Seq::verifyOutJoin(const SGJoin* join)
   }
 }
 
-void Side2Seq::convertPath(const NamedPath& inPath)
+void Side2Seq::convertPath(const SGNamedPath& inPath)
 {
   _outPaths.resize(_outPaths.size() + 1);
-  NamedPath& outPath = _outPaths.back();
+  SGNamedPath& outPath = _outPaths.back();
   outPath.first = inPath.first;  
   for (int i = 0; i < inPath.second.size(); ++i)
   {

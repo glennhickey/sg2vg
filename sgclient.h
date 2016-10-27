@@ -15,6 +15,7 @@
 
 #include <sstream>
 #include "sidegraph.h"
+#include "sgsegment.h"
 #include "download.h"
 
 
@@ -51,12 +52,11 @@ public:
    /** toggle whether paths are downloaded */
    void setSkipPaths(bool skipPaths);
 
-   typedef std::pair<std::string, std::vector<SGSegment> > NamedPath;
    /** Download a whole Side Graph into memory.  Topolgy gets stored 
     * internally in (returned) SideGraph, path and bases get stored in 
     * the given vectors */
    const SideGraph* downloadGraph(std::vector<std::string>& outBases,
-                                  std::vector<NamedPath>& outPaths);
+                                  std::vector<SGNamedPath>& outPaths);
    
    /** Download sequences into the Side Graph. returns Next Page Token.
     * call after downloadReferences.  In order to get sequence names,
@@ -93,7 +93,7 @@ public:
                      int variantSetID = -1);
 
    /** Download alleles (only saving named paths for now) */
-   int downloadAllelePaths(std::vector<NamedPath>& outPaths,
+   int downloadAllelePaths(std::vector<SGNamedPath>& outPaths,
                            int pageToken = 0,
                            int pageSize = DefaultPageSize,
                            int sequenceID = -1,

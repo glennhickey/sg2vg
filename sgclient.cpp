@@ -85,7 +85,7 @@ ostream& SGClient::os()
 }
 
 const SideGraph* SGClient::downloadGraph(vector<string>& outBases,
-                                         vector<NamedPath>& outPaths)
+                                         vector<SGNamedPath>& outPaths)
 {
   map<int, string> refIDMap;
   os() << "Downloading References...";
@@ -366,7 +366,7 @@ int SGClient::downloadJoins(vector<const SGJoin*>& outJoins,
   return nextPageToken;
 }
 
-int SGClient::downloadAllelePaths(vector<NamedPath>& outPaths,
+int SGClient::downloadAllelePaths(vector<SGNamedPath>& outPaths,
                                   int pageToken, int pageSize,
                                   int sequenceID,
                                   const vector<int>* variantSetIDs,
@@ -403,7 +403,7 @@ int SGClient::downloadAllelePaths(vector<NamedPath>& outPaths,
   }
 
   // With IDs in hand, we call downloadAllele on each one to get the path.
-  NamedPath allelePath;
+  SGNamedPath allelePath;
   int alleleVariantSetID;
   for (int i = 0; i < alleleIDs.size(); ++i)
   {
