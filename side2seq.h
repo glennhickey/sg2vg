@@ -49,7 +49,8 @@ public:
              const std::vector<NamedPath>* paths,
              bool forceUpperCase = false,
              bool makeSequencePaths = false,
-             const std::string& seqPathPrefix = "&SG_");
+             const std::string& seqPathPrefix = "&SG_",
+             int chop = 0);
 
    /** Convert the graph into a new sidegraph, bases, and paths */
    void convert();
@@ -93,8 +94,16 @@ protected:
    void convertPath(const NamedPath& inPath);
 
    /** get all positions in range that are incident to one or more joins */
-   int getIncidentJoins(const SGSide& start, const SGSide& end,
-                        std::set<SGSide>& outSides) const;
+   void getIncidentJoins(const SGSide& start, const SGSide& end,
+                         std::set<SGSide>& outSides) const;
+
+   /** insert sides into the outsides sets so that none are further than
+    * _chop bases apart */
+   void getChopSides(const SGSequence* seq, std::set<SGSide>& outSides) const;
+
+   /** run after above two methods to filter out sides that would induce
+    * the same cut */
+   void cleanCutSides(std::set<SGSide>& outSides) const;
 
    /** generate a name for a sequence in the output graph */
    std::string getOutSeqName(const SGSequence* inSeq, const SGPosition& first,
@@ -111,6 +120,7 @@ protected:
    bool _forceUpper;
    bool _makeSeqPaths;
    std::string _seqPathPrefix;
+   int _chop;
 
    // map Side Graph to Sequence Graph coords. 
    SGLookup _luTo;

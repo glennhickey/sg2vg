@@ -15,7 +15,7 @@ using namespace std;
 
 Side2Seq::Side2Seq() : _inGraph(NULL), _inBases(NULL), _inPaths(NULL),
                        _outGraph(NULL), _forceUpper(false),
-                       _makeSeqPaths(false)
+                       _makeSeqPaths(false), _chop(0)
 {
   
 }
@@ -37,6 +37,7 @@ void Side2Seq::reset()
   _outBases.clear();
   _outPaths.clear();
   _joinSet2.clear();
+  _chop = 0;
 }
 
 void Side2Seq::init(const SideGraph* sg,
@@ -44,7 +45,8 @@ void Side2Seq::init(const SideGraph* sg,
                     const vector<NamedPath>* paths,
                     bool forceUpperCase,
                     bool makeSequencePaths,
-                    const string& seqPathPrefix)
+                    const string& seqPathPrefix,
+                    int chop)
 {
   reset();
   _inGraph = sg;
@@ -56,6 +58,7 @@ void Side2Seq::init(const SideGraph* sg,
   _forceUpper = forceUpperCase;
   _makeSeqPaths = makeSequencePaths;
   _seqPathPrefix = seqPathPrefix;
+  _chop = chop;
 
   // re-index joins based on side2
   const SideGraph::JoinSet* js = _inGraph->getJoinSet();
@@ -131,6 +134,12 @@ void Side2Seq::convertSequence(const SGSequence* seq)
   {
     getIncidentJoins(start, end, cutSides);
   }
+  if (_chop > 0)
+  {
+    getChopSides(seq, cutSides);
+  }
+  cleanCutSides(cutSides);
+  
   SGPosition first(seq->getID(), 0);
   int firstIdx = _outGraph->getNumSequences();
   for (set<SGSide>::iterator i = cutSides.begin(); i != cutSides.end(); ++i)
@@ -271,7 +280,7 @@ void Side2Seq::convertPath(const NamedPath& inPath)
   }
 }
 
-int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
+void Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
                                set<SGSide>& outSides) const
 {
   outSides.clear();
@@ -305,7 +314,44 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
   {
     outSides.insert(*k);
   }
+}
 
+void Side2Seq::getChopSides(const SGSequence* seq,
+                            set<SGSide>& outSides) const
+{
+  assert(_chop > 0);
+  
+  // want to take into account endpoints, so we insert
+  // them here, then remove them at end of function.
+  // note: these are different from the start/end points passed to
+  // getIncidentJoins because they include entire sequence
+  SGSide start = SGSide(SGPosition(seq->getID(), 0), true);
+  SGSide end = SGSide(SGPosition(seq->getID(), seq->getLength() - 1), false);
+
+  outSides.insert(start);
+  outSides.insert(end);
+  
+  set<SGSide>::const_iterator prev = outSides.begin();
+  set<SGSide>::const_iterator cur = outSides.begin();
+  ++cur;
+  for (; cur != outSides.end(); ++prev, ++cur)
+  {
+    sg_int_t space = prev->lengthTo(*cur);
+    for (sg_int_t insOffset = _chop; space - insOffset > 0; insOffset += _chop)
+    {
+      SGSide insSide(SGPosition(prev->getBase().getSeqID(),
+                                prev->getBase().getPos() + insOffset),
+                     prev->getForward());
+      outSides.insert(insSide);
+    }
+  }
+
+  outSides.erase(start);
+  outSides.erase(end);
+}
+
+void Side2Seq::cleanCutSides(std::set<SGSide>& outSides) const
+{
   // filter sides that would induce same cut (probably would have
   // been smarter to deal with positions instead of sides here)
   set<SGSide>::iterator cur = outSides.begin();
@@ -324,8 +370,6 @@ int Side2Seq::getIncidentJoins(const SGSide& start, const SGSide& end,
       outSides.erase(cur);
     }
   }
-  
-  return outSides.size();
 }
 
 string Side2Seq::getOutSeqName(const SGSequence* inSeq,

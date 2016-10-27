@@ -350,6 +350,80 @@ void rev2bSnpJoinTest(CuTest *testCase)
 
 }
 
+void chopTest(CuTest *testCase)
+{
+  CuAssertTrue(testCase, true);
+
+  // build easy side graph with one snp. 
+
+  SideGraph sg;
+  sg.addSequence(new SGSequence(0, 10, "seq1"));
+  sg.addSequence(new SGSequence(1, 1, "snp"));
+  sg.addJoin(new SGJoin(SGSide(SGPosition(0, 3), false),
+                        SGSide(SGPosition(1, 0), true)));
+  sg.addJoin(new SGJoin(SGSide(SGPosition(1, 0), false),
+                        SGSide(SGPosition(0, 5), true)));
+  vector<string> bases(2);
+  bases[0] = string(10, 'A');
+  bases[1] = string(1, 'G');
+  
+  vector<Side2Seq::NamedPath> paths(2);
+  paths[0].first = "path1";
+  paths[0].second.push_back(SGSegment(SGSide(SGPosition(0, 0), true), 10));
+
+  paths[1].first = "path2";
+  paths[1].second.push_back(SGSegment(SGSide(SGPosition(0, 0), true), 4));
+  paths[1].second.push_back(SGSegment(SGSide(SGPosition(1, 0), true), 1));
+  paths[1].second.push_back(SGSegment(SGSide(SGPosition(0, 5), true), 5));
+
+  Side2Seq converter;
+  converter.init(&sg, &bases, &paths, false, false, "", 2);
+  converter.convert();
+
+  const SideGraph* outGraph = converter.getOutGraph();
+  const vector<string> outBases = converter.getOutBases();
+  const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
+
+  // expect sequences of length 2, 2, 1, 1, 2, 2, 1
+  CuAssertTrue(testCase, outGraph->getNumSequences() == 7);
+  CuAssertTrue(testCase, outGraph->getSequence(0)->getLength() == 2);
+  CuAssertTrue(testCase, outGraph->getSequence(1)->getLength() == 2);
+  CuAssertTrue(testCase, outGraph->getSequence(2)->getLength() == 1);
+  CuAssertTrue(testCase, outGraph->getSequence(3)->getLength() == 1);
+  CuAssertTrue(testCase, outGraph->getSequence(4)->getLength() == 2);
+  CuAssertTrue(testCase, outGraph->getSequence(5)->getLength() == 2);
+  CuAssertTrue(testCase, outGraph->getSequence(6)->getLength() == 1);
+
+  // expect 5 extra joins
+  CuAssertTrue(testCase, outGraph->getJoinSet()->size() == 7);
+  SGJoin j1(SGSide(SGPosition(0, 1), false),
+            SGSide(SGPosition(1, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j1) != NULL);
+  SGJoin j2(SGSide(SGPosition(1, 1), false),
+            SGSide(SGPosition(2, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j2) != NULL);
+  SGJoin j3(SGSide(SGPosition(1, 1), false),
+            SGSide(SGPosition(6, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j3) != NULL);
+  SGJoin j4(SGSide(SGPosition(2, 0), false),
+            SGSide(SGPosition(3, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j4) != NULL);
+  SGJoin j5(SGSide(SGPosition(6, 0), false),
+            SGSide(SGPosition(3, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j5) != NULL);
+  SGJoin j6(SGSide(SGPosition(3, 0), false),
+            SGSide(SGPosition(4, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j6) != NULL);
+  SGJoin j7(SGSide(SGPosition(4, 1), false),
+            SGSide(SGPosition(5, 0), true));
+  CuAssertTrue(testCase, outGraph->getJoin(&j7) != NULL);
+
+  // both paths should be broken up over the six segments
+  CuAssertTrue(testCase, outPaths.size() == 2);
+  CuAssertTrue(testCase, outPaths[0].second.size() == 6);
+  CuAssertTrue(testCase, outPaths[0].second.size() == 6);
+}
+
 
 CuSuite* side2SeqTestSuite(void) 
 {
@@ -357,6 +431,7 @@ CuSuite* side2SeqTestSuite(void)
   SUITE_ADD_TEST(suite, simpleTest);
   SUITE_ADD_TEST(suite, inversionTest);
   SUITE_ADD_TEST(suite, doubleCutTest);
-  SUITE_ADD_TEST(suite, rev2bSnpJoinTest);  
+  SUITE_ADD_TEST(suite, rev2bSnpJoinTest);
+  SUITE_ADD_TEST(suite, chopTest);
   return suite;
 }
