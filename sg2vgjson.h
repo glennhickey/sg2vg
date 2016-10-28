@@ -50,15 +50,23 @@ public:
    /** write nodes and edges and paths*/
    void writeGraph(const SideGraph* sg,
                    const std::vector<std::string>& bases,
-                   const std::vector<std::pair<
-                   std::string, std::vector<SGSegment> > >& paths);
+                   const std::vector<SGNamedPath>& paths);
+
+   /** write a graph chunk by chunk */
+   void writeChunkedGraph(const SideGraph* sg,
+                          const std::vector<std::string>& bases,
+                          const std::vector<SGNamedPath>& paths,
+                          int sequencesPerChunk = 5000,
+                          int joinsPerChunk = 100000,
+                          int pathSegsPerChunk = 10000);
    
 protected:
 
    // add to json doc
    void addNode(const SGSequence* seq);
    void addEdge(const SGJoin* join);
-   void addPath(const std::string& name, const std::vector<SGSegment>& path);
+   void addPath(const std::string& name, const std::vector<SGSegment>& path,
+                int rank = 0);
 
    // rapidjson interface seems pretty horrible but too late to switch
    // apis.  some helpers:

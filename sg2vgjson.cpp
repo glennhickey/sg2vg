@@ -40,8 +40,7 @@ void SG2VGJSON::init(ostream* os)
 
 void SG2VGJSON::writeGraph(const SideGraph* sg,
                            const vector<string>& bases,
-                           const vector<pair<string, vector<SGSegment> > >&
-                           paths)
+                           const vector<SGNamedPath>& paths)
 {
   _sg = sg;
   _bases = &bases;
@@ -79,6 +78,98 @@ void SG2VGJSON::writeGraph(const SideGraph* sg,
   *_os << temp.substr(1, temp.length()-1);
 }
 
+void SG2VGJSON::writeChunkedGraph(const SideGraph* sg,
+                                  const std::vector<std::string>& bases,
+                                  const std::vector<SGNamedPath>& paths,
+                                  int sequencesPerChunk,
+                                  int joinsPerChunk,
+                                  int pathSegsPerChunk)
+{
+  // current offset wrt to what's been written so far
+  int sequencesAdded = 0;
+  SideGraph::JoinSet::const_iterator joinsAdded = sg->getJoinSet()->begin();
+  int pathsAdded = 0;
+  int segmentsAdded = 0; // note this is relative to current last path. 
+
+  for(bool wroteSomething = true; wroteSomething == true;)
+  {
+    // current count in chunk
+    int sequencesInChunk = 0;
+    int joinsInChunk = 0;
+    int segmentsInChunk = 0;
+
+    init(_os);
+
+    _sg = sg;
+    _bases = &bases;
+    _paths = &paths;
+
+    *_os << "{";
+  
+    // add every node to json doc
+    for (; sequencesInChunk < sequencesPerChunk &&
+            sequencesAdded < _sg->getNumSequences();
+         ++sequencesInChunk, ++sequencesAdded)
+    {
+      addNode(_sg->getSequence(sequencesAdded));
+    }
+    double progress = (double)sequencesInChunk / sequencesPerChunk;
+    
+    // add every edge to json doc
+    int joinsToAdd = joinsPerChunk * (1. - progress);
+    const SideGraph::JoinSet* joinSet = _sg->getJoinSet();
+    for (; joinsAdded != joinSet->end() && joinsInChunk < joinsToAdd;
+         ++joinsInChunk, ++joinsAdded)
+    {
+      addEdge(*joinsAdded);
+    }
+    progress += (double)joinsInChunk / joinsPerChunk;
+
+    // add every path to json doc
+    int segmentsToAdd = pathSegsPerChunk * (1. - progress);
+    for (; pathsAdded < paths.size() && segmentsInChunk < segmentsToAdd;
+         ++pathsAdded)
+    {
+      const SGNamedPath& path = paths[pathsAdded];
+      if (segmentsAdded == 0 && segmentsToAdd >= path.second.size())
+      {
+        // we're adding entire path
+        addPath(path.first, path.second);
+        segmentsInChunk += path.second.size();
+      }
+      else
+      {
+        // we need to chop path
+        while (segmentsAdded < path.second.size() &&
+               segmentsInChunk < segmentsToAdd)
+        {
+          int pathChunkSize = min(pathSegsPerChunk,
+                                  (int)path.second.size() - segmentsAdded);
+          vector<SGSegment>::const_iterator a =
+             path.second.begin() + segmentsAdded;
+          vector<SGSegment>::const_iterator b = a + pathChunkSize;
+          addPath(path.first, vector<SGSegment>(a, b), segmentsAdded);
+          segmentsAdded += pathChunkSize;
+          segmentsInChunk += pathChunkSize;
+        }
+      }
+      segmentsAdded = 0;
+    }
+
+    // after this we'll have added 2 copies of the graph to memory
+    // 1) json doc 2) this buffer 
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    _doc->Accept(writer);
+    // make that a 3rd time -- strip outer nesting {}'s.
+    string temp(buffer.GetString());
+    *_os << temp.substr(1, temp.length()-1);
+
+    wroteSomething = sequencesInChunk + joinsInChunk + segmentsInChunk > 0;
+  }
+}
+
+
 void SG2VGJSON::addNode(const SGSequence* seq)
 {  
   Value node;
@@ -102,7 +193,8 @@ void SG2VGJSON::addEdge(const SGJoin* join)
   edges().PushBack(edge, allocator());
 }
 
-void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
+void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path,
+                        int rank)
 {
   Value jpath;
   jpath.SetObject();
@@ -140,7 +232,7 @@ void SG2VGJSON::addPath(const string& name, const vector<SGSegment>& path)
     Value mapping;
     mapping.SetObject();
     mapping.AddMember("position", position, allocator());
-    addInt(mapping, "rank", i + 1);
+    addInt(mapping, "rank", rank + i + 1);
     mappings.PushBack(mapping, allocator());
   }
   if (inputPathLength != outputPathLength)
