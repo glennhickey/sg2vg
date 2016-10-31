@@ -38,7 +38,7 @@ void simpleTest(CuTest *testCase)
   bases[0] = string(10, 'A');
   bases[1] = string(1, 'G');
   
-  vector<Side2Seq::NamedPath> paths(2);
+  vector<SGNamedPath> paths(2);
   paths[0].first = "path1";
   paths[0].second.push_back(SGSegment(SGSide(SGPosition(0, 0), true), 10));
 
@@ -53,7 +53,7 @@ void simpleTest(CuTest *testCase)
 
   const SideGraph* outGraph = converter.getOutGraph();
   const vector<string> outBases = converter.getOutBases();
-  const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
+  const vector<SGNamedPath> outPaths = converter.getOutPaths();
 
   // expect sequences of length 4, 1, 5, 1
   CuAssertTrue(testCase, outGraph->getNumSequences() == 4);
@@ -148,7 +148,7 @@ void inversionTest(CuTest *testCase)
   bases[0] = "ACCTGACCATAGGCATGGGC";
   bases[1] = "TCCGCCTAAA";
   
-  vector<Side2Seq::NamedPath> paths(2);
+  vector<SGNamedPath> paths(2);
 
   // follow joins "left to right"
   paths[0].first = "path1";
@@ -183,7 +183,7 @@ void inversionTest(CuTest *testCase)
 
   const SideGraph* outGraph = converter.getOutGraph();
   const vector<string> outBases = converter.getOutBases();
-  const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
+  const vector<SGNamedPath> outPaths = converter.getOutPaths();
 
   // first sequence should be cut up into 4, and 2nd into 7
   CuAssertTrue(testCase, outGraph->getNumSequences() == 11);
@@ -264,7 +264,7 @@ void doubleCutTest(CuTest *testCase)
   vector<string> bases(1);
   bases[0] = "ACCTGACCATAGGCATGGGC";
 
-  vector<Side2Seq::NamedPath> paths;
+  vector<SGNamedPath> paths;
 
   Side2Seq converter;
   converter.init(&sg, &bases, &paths);
@@ -309,7 +309,7 @@ void rev2bSnpJoinTest(CuTest *testCase)
   bases[0] = "ACCTGACCATAGGCATGGGC";
   bases[1] = "TA";
 
-  vector<Side2Seq::NamedPath> paths;
+  vector<SGNamedPath> paths;
 
   Side2Seq converter;
   converter.init(&sg, &bases, &paths);
@@ -367,7 +367,7 @@ void chopTest(CuTest *testCase)
   bases[0] = string(10, 'A');
   bases[1] = string(1, 'G');
   
-  vector<Side2Seq::NamedPath> paths(2);
+  vector<SGNamedPath> paths(2);
   paths[0].first = "path1";
   paths[0].second.push_back(SGSegment(SGSide(SGPosition(0, 0), true), 10));
 
@@ -382,7 +382,7 @@ void chopTest(CuTest *testCase)
 
   const SideGraph* outGraph = converter.getOutGraph();
   const vector<string> outBases = converter.getOutBases();
-  const vector<Side2Seq::NamedPath> outPaths = converter.getOutPaths();
+  const vector<SGNamedPath> outPaths = converter.getOutPaths();
 
   // expect sequences of length 2, 2, 1, 1, 2, 2, 1
   CuAssertTrue(testCase, outGraph->getNumSequences() == 7);
