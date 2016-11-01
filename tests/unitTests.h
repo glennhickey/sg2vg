@@ -12,6 +12,5 @@ extern "C" {
 }
 
 CuSuite* sgClientTestSuite();
-CuSuite* side2SeqTestSuite();
 
 #endif

@@ -20,9 +20,6 @@ unitTests.o : unitTests.h unitTests.cpp
 sgclientTests.o : sgclientTests.cpp ${rootPath}/*.h
 	${cpp} ${cppflags} -I ${sgExportPath}/tests -I${rootPath}/ sgclientTests.cpp -c
 
-side2seqTests.o : side2seqTests.cpp ${rootPath}/*.h
-	${cpp} ${cppflags} -I ${sgExportPath}/tests -I${rootPath}/ side2seqTests.cpp -c
-
-unitTests : CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${sgExportPath}/sgExport.a ${sg2vgObjects} ${basicLibsDependencies}
-	${cpp} -I ${sgExportPath}/tests -I${rootPath}/ ${cppflags}  CuTest.o unitTests.o sgclientTests.o side2seqTests.o ${sg2vgObjects} ${basicLibs} ${sgExportPath}/sgExport.a -o unitTests
+unitTests : CuTest.o unitTests.o sgclientTests.o ${sgExportPath}/sgExport.a ${sg2vgObjects} ${basicLibsDependencies}
+	${cpp} -I ${sgExportPath}/tests -I${rootPath}/ ${cppflags}  CuTest.o unitTests.o sgclientTests.o ${sg2vgObjects} ${basicLibs} ${sgExportPath}/sgExport.a -o unitTests
 
